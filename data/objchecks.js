@@ -1,0 +1,173 @@
+/* CyberRuta — comprobación de objetivos.
+   Una pregunta por objetivo de cada módulo, en el mismo orden que m.objectives.
+   { q, a:[opciones], c:índice correcto, w:explicación }. */
+window.OBJCHECKS = {
+m01: [
+  { q: "En una palabra: ¿qué componente pierde su contenido al apagar el equipo?", a: ["El disco duro", "La RAM", "La CPU"], c: 1, w: "La RAM es volátil; por eso se preserva antes de apagar." },
+  { q: "255 en hexadecimal es:", a: ["FF", "0A", "100"], c: 0, w: "255 = 0xFF." },
+  { q: "El kernel es:", a: ["Un programa de usuario", "El núcleo que administra el hardware", "Un tipo de archivo"], c: 1, w: "Habla directamente con el hardware." },
+  { q: "Comparas el hash de un archivo con el publicado y coinciden. Significa que:", a: ["El archivo no fue alterado", "El archivo es seguro de ejecutar siempre", "El archivo está cifrado"], c: 0, w: "El hash verifica integridad, no ausencia de malware." },
+],
+m02: [
+  { q: "Ves muchos eventos 4625 seguidos de un 4624 en una cuenta. Sugiere:", a: ["Un reinicio normal", "Intentos fallidos y luego un acceso exitoso", "Una actualización"], c: 1, w: "Posible acceso indebido tras varios fallos." },
+  { q: "¿Qué cmdlet lista los procesos en ejecución?", a: ["Get-Service", "Get-Process", "Get-Content"], c: 1, w: "Get-Process." },
+  { q: "Encuentras un proceso legítimo por nombre pero ejecutándose desde una carpeta de usuario. Es:", a: ["Normal", "Sospechoso: revisa la ruta", "Un driver"], c: 1, w: "El nombre engaña; la ruta delata." },
+  { q: "El Event ID 1102 registra:", a: ["Un inicio de sesión", "El borrado del registro de seguridad", "Un proceso nuevo"], c: 1, w: "Suele indicar que alguien borra huellas." },
+],
+m03: [
+  { q: "Un hypervisor sirve para:", a: ["Cifrar discos", "Ejecutar máquinas virtuales", "Filtrar correos"], c: 1, w: "VirtualBox, VMware, Hyper-V." },
+  { q: "Una máquina intencionalmente vulnerable debe conectarse a:", a: ["Tu red de casa", "Una red interna aislada", "Internet directo"], c: 1, w: "Nunca a tu red real." },
+  { q: "El snapshot te permite:", a: ["Acelerar la VM", "Volver a un estado anterior", "Compartir la VM"], c: 1, w: "Restauras el punto guardado." },
+  { q: "¿Contra qué es legal practicar ataques?", a: ["Cualquier web", "Tus propias VMs y plataformas autorizadas", "La red del vecino"], c: 1, w: "Sin autorización escrita es delito." },
+],
+m04a: [
+  { q: "Una distribución de Linux es:", a: ["Un kernel distinto", "Linux empaquetado con instalador y programas", "Un antivirus"], c: 1, w: "Todas comparten el mismo kernel." },
+  { q: "La forma más segura de probar Linux por primera vez:", a: ["Borrar Windows", "Una máquina virtual", "Cambiar la BIOS"], c: 1, w: "Aísla Linux sin tocar tu disco." },
+  { q: "Al instalar Ubuntu en una VM, 'Borrar disco e instalar' afecta:", a: ["Tu Windows", "Solo el disco virtual de la VM", "Tus documentos reales"], c: 1, w: "Tu PC real queda intacto." },
+  { q: "¿Qué comando muestra en qué carpeta estás?", a: ["ls", "pwd", "whoami"], c: 1, w: "pwd = print working directory." },
+],
+m04: [
+  { q: "Los logs del sistema en Linux suelen estar en:", a: ["/etc", "/var/log", "/home"], c: 1, w: "auth.log, syslog…" },
+  { q: "¿Qué muestra los archivos ocultos?", a: ["ls", "ls -la", "pwd"], c: 1, w: "-a incluye los que empiezan por punto." },
+  { q: "Para buscar un archivo .conf en todo el sistema usas:", a: ["grep", "find / -name '*.conf'", "cat"], c: 1, w: "find recorre el árbol de directorios." },
+  { q: "Terminaste Bandit 0-10. ¿Qué protocolo usaste para conectarte?", a: ["FTP", "SSH", "HTTP"], c: 1, w: "SSH cifra la sesión remota." },
+],
+m05: [
+  { q: "chmod 640 da al grupo el permiso:", a: ["rwx", "rw-", "r--"], c: 2, w: "6 dueño, 4 grupo (r--), 0 otros." },
+  { q: "Los hashes de contraseñas en Linux están en:", a: ["/etc/passwd", "/etc/shadow", "/var/log"], c: 1, w: "shadow, solo legible por root." },
+  { q: "No trabajar como root a diario aplica el principio de:", a: ["Zero-day", "Mínimo privilegio", "No repudio"], c: 1, w: "Least privilege." },
+  { q: "Para ver procesos y su consumo en tiempo real usas:", a: ["top", "ls", "cd"], c: 0, w: "top o htop." },
+],
+m06: [
+  { q: "'sort | uniq -c' sirve para:", a: ["Cifrar", "Contar líneas repetidas", "Borrar"], c: 1, w: "Cuenta repeticiones (primero sort)." },
+  { q: "Para contar cuántas líneas tienen 'Failed' usas grep con:", a: ["wc -l", "cat", "cd"], c: 0, w: "grep Failed | wc -l." },
+  { q: "La primera línea de un script bash es:", a: ["#bash", "#!/bin/bash", "run"], c: 1, w: "El shebang." },
+  { q: "Para ejecutar un script cada hora usas:", a: ["cron", "grep", "top"], c: 0, w: "crontab programa tareas." },
+],
+m07: [
+  { q: "Un /26 tiene cuántos hosts usables:", a: ["64", "62", "30"], c: 1, w: "2^6 − 2 = 62." },
+  { q: "¿Cuál es una IP privada?", a: ["8.8.8.8", "172.20.5.1", "200.1.1.1"], c: 1, w: "172.16.0.0/12 es privado." },
+  { q: "Un switch trabaja principalmente en la capa:", a: ["1", "2", "3"], c: 1, w: "Enlace, con direcciones MAC." },
+  { q: "Segmentar el entorno de tarjetas (CDE) sirve para:", a: ["Ir más rápido", "Reducir el alcance y aislar datos de tarjetas", "Ahorrar IPs"], c: 1, w: "Menos sistemas en alcance, menos riesgo." },
+],
+m08: [
+  { q: "La secuencia del saludo TCP es:", a: ["ACK, SYN, FIN", "SYN, SYN-ACK, ACK", "HELLO, OK"], c: 1, w: "Three-way handshake." },
+  { q: "El puerto de RDP es:", a: ["22", "3389", "80"], c: 1, w: "3389/TCP." },
+  { q: "DNS traduce:", a: ["IPs a nombres y viceversa", "Puertos a servicios", "Bytes a hex"], c: 0, w: "Nombres de dominio a direcciones IP." },
+  { q: "TLS protege principalmente:", a: ["La disponibilidad", "La confidencialidad e integridad en tránsito", "El disco"], c: 1, w: "Cifra y autentica la comunicación." },
+],
+m09: [
+  { q: "Para capturar tráfico a un archivo desde la terminal usas:", a: ["tcpdump -w", "grep", "ping"], c: 0, w: "-w escribe el pcap." },
+  { q: "El filtro de Wireshark para una IP concreta es:", a: ["ip==x", "ip.addr==10.0.0.5", "host"], c: 1, w: "ip.addr cubre origen o destino." },
+  { q: "Nmap sirve para:", a: ["Cifrar", "Inventariar equipos y servicios", "Borrar logs"], c: 1, w: "Solo en redes propias o autorizadas." },
+  { q: "Una IP tocando muchos puertos en segundos indica:", a: ["Un backup", "Un escaneo (reconocimiento)", "DNS normal"], c: 1, w: "Patrón que un IDS convierte en alerta." },
+],
+m10: [
+  { q: "Para contar eventos por IP en Python usas:", a: ["Una lista", "Un diccionario", "Un string"], c: 1, w: "Clave = IP, valor = conteo." },
+  { q: "'with open(archivo) as f' garantiza que:", a: ["El archivo se cifre", "El archivo se cierre al terminar", "Se ejecute como root"], c: 1, w: "Context manager." },
+  { q: "Una función en Python se define con:", a: ["def", "func", "function"], c: 0, w: "def nombre(parámetros)." },
+  { q: "Python, a diferencia de Java, es:", a: ["Compilado y estático", "Interpretado y dinámico", "Solo para web"], c: 1, w: "Tipado dinámico." },
+],
+m11: [
+  { q: "Regex (expresiones regulares) sirve para:", a: ["Cifrar", "Buscar patrones de texto", "Comprimir"], c: 1, w: "Extraer IPs, correos, hashes." },
+  { q: "Una API REST normalmente responde en:", a: ["PDF", "JSON", "EXE"], c: 1, w: "JSON." },
+  { q: "¿Dónde debe guardarse una API key?", a: ["En el código", "En una variable de entorno o .env ignorado por git", "En el README"], c: 1, w: "Nunca en el código fuente." },
+  { q: "Enriquecer una alerta significa:", a: ["Borrarla", "Agregarle contexto (reputación, país)", "Cerrarla"], c: 1, w: "Contexto para decidir más rápido." },
+],
+m12: [
+  { q: "La inyección SQL en Java se previene con:", a: ["double", "PreparedStatement y parámetros", "System.out"], c: 1, w: "Consultas parametrizadas." },
+  { q: "El tipo correcto para montos de dinero es:", a: ["float", "BigDecimal", "int siempre"], c: 1, w: "Precisión decimal exacta." },
+  { q: "¿Qué NUNCA debe registrarse en un log?", a: ["La fecha", "El número completo de tarjeta (PAN)", "El código de error"], c: 1, w: "Protegido por PCI DSS." },
+  { q: "Para revisar dependencias vulnerables usas:", a: ["OWASP Dependency-Check", "un antivirus", "un firewall"], c: 0, w: "Detecta librerías con CVE conocidas." },
+],
+m13: [
+  { q: "Alterar el monto de una transferencia afecta la:", a: ["Confidencialidad", "Integridad", "Disponibilidad"], c: 1, w: "El dato fue modificado." },
+  { q: "Amenaza × vulnerabilidad × impacto define el:", a: ["Control", "Riesgo", "Activo"], c: 1, w: "Es la fórmula del riesgo." },
+  { q: "Un backup es un control:", a: ["Preventivo", "Correctivo", "Disuasivo"], c: 1, w: "Restaura tras el daño." },
+  { q: "Registrar qué hizo un usuario corresponde a:", a: ["Authentication", "Accounting", "Availability"], c: 1, w: "La 'A' de auditoría en AAA." },
+],
+m14: [
+  { q: "AES es cifrado:", a: ["Asimétrico", "Simétrico", "Un hash"], c: 1, w: "Una sola llave compartida." },
+  { q: "Para firmar digitalmente se usa la llave:", a: ["Pública del receptor", "Privada del emisor", "Simétrica"], c: 1, w: "Se verifica con la pública del emisor." },
+  { q: "El salt en las contraseñas evita:", a: ["El phishing", "Las tablas precalculadas (rainbow tables)", "El DoS"], c: 1, w: "Hace único cada hash." },
+  { q: "Un HSM sirve para:", a: ["Filtrar correos", "Proteger llaves criptográficas en hardware", "Escanear puertos"], c: 1, w: "Los bancos lo usan para PINs y tarjetas." },
+],
+m15: [
+  { q: "¿Qué factor de autenticación es más débil?", a: ["Llave FIDO2", "Código por SMS", "App autenticadora"], c: 1, w: "Vulnerable a SIM swap." },
+  { q: "Que quien crea un pago no lo apruebe es:", a: ["Mínimo privilegio", "Segregación de funciones", "Zero Trust"], c: 1, w: "Separation of duties." },
+  { q: "RBAC asigna permisos según:", a: ["La persona", "El rol", "La antigüedad"], c: 1, w: "Cajero, auditor, admin…" },
+  { q: "Zero Trust significa:", a: ["Confiar en la red interna", "Verificar cada acceso siempre", "No usar contraseñas"], c: 1, w: "Never trust, always verify." },
+],
+m16: [
+  { q: "El malware que se replica solo por la red es un:", a: ["Troyano", "Gusano", "Spyware"], c: 1, w: "No necesita interacción." },
+  { q: "Una llamada del 'área de seguridad' pidiendo tu código es:", a: ["Smishing", "Vishing", "Pharming"], c: 1, w: "Phishing por voz." },
+  { q: "Un grupo estatal sofisticado y persistente es un:", a: ["Script kiddie", "APT", "Insider"], c: 1, w: "Advanced Persistent Threat." },
+  { q: "DMARC ayuda a:", a: ["Cifrar correos", "Evitar la suplantación del dominio remitente", "Bloquear puertos"], c: 1, w: "Se apoya en SPF y DKIM." },
+],
+m17: [
+  { q: "El riesgo #1 del OWASP Top 10 (2021) es:", a: ["Inyección", "Control de acceso roto", "XSS"], c: 1, w: "Broken Access Control." },
+  { q: "El XSS se ejecuta en:", a: ["La base de datos", "El navegador de la víctima", "El firewall"], c: 1, w: "Cross-Site Scripting." },
+  { q: "La autorización de un recurso debe verificarse en:", a: ["La app móvil", "El servidor", "El navegador"], c: 1, w: "El cliente es manipulable." },
+  { q: "¿Dónde es legal practicar ataques web?", a: ["La web de tu banco", "Juice Shop, PortSwigger Academy y tu lab", "Cualquier sitio"], c: 1, w: "Solo entornos autorizados." },
+],
+m18: [
+  { q: "Antes de un pentest debe existir:", a: ["Un exploit", "Autorización y reglas de compromiso", "Un SIEM"], c: 1, w: "Sin autorización es delito." },
+  { q: "El catálogo KEV de CISA lista vulnerabilidades:", a: ["Teóricas", "Explotadas activamente", "Ya corregidas"], c: 1, w: "Se priorizan primero." },
+  { q: "La parte más valiosa de un pentest para el cliente es:", a: ["La explotación", "El informe con recomendaciones", "Las capturas"], c: 1, w: "Permite corregir." },
+  { q: "CVSS 9.8 es severidad:", a: ["Baja", "Media", "Crítica"], c: 2, w: "9.0-10.0 = crítica." },
+],
+m19: [
+  { q: "La función principal de un SIEM es:", a: ["Bloquear virus", "Centralizar y correlacionar logs para alertar", "Hacer backups"], c: 1, w: "Visibilidad y detección." },
+  { q: "Un ataque real que NO generó alerta es un:", a: ["Falso positivo", "Falso negativo", "Verdadero negativo"], c: 1, w: "El más peligroso." },
+  { q: "Una regla razonable para fuerza bruta sería:", a: ["1 fallo", "5 fallos en 60 s desde la misma IP", "Cualquier login"], c: 1, w: "Equilibra detección y falsos positivos." },
+  { q: "Priorizar alertas por severidad se llama:", a: ["Hardening", "Triage", "Pivoting"], c: 1, w: "Triage." },
+],
+m20: [
+  { q: "En ATT&CK, una táctica representa:", a: ["El cómo", "El objetivo del atacante (el porqué)", "Un CVE"], c: 1, w: "Las técnicas son el cómo." },
+  { q: "T1566 corresponde a:", a: ["Fuerza bruta", "Phishing", "Ransomware"], c: 1, w: "Phishing." },
+  { q: "Sigma es:", a: ["Un malware", "Un formato genérico de reglas de detección", "Un SIEM"], c: 1, w: "Portable a cualquier SIEM." },
+  { q: "El threat hunting parte de:", a: ["Una alerta", "Una hipótesis", "Un parche"], c: 1, w: "Búsqueda proactiva." },
+],
+m21: [
+  { q: "La primera acción ante un equipo con ransomware activo es:", a: ["Apagarlo y formatear", "Aislarlo de la red sin apagarlo", "Pagar"], c: 1, w: "Contener sin perder evidencia." },
+  { q: "Según el orden de volatilidad se recolecta primero:", a: ["El disco", "La RAM", "Los backups"], c: 1, w: "Lo más volátil primero." },
+  { q: "La cadena de custodia documenta:", a: ["Los parches", "Quién tuvo la evidencia y cuándo", "El presupuesto"], c: 1, w: "Le da validez legal." },
+  { q: "La fase final de NIST es:", a: ["Detección", "Contención", "Actividad post-incidente (lecciones)"], c: 2, w: "Mejora continua." },
+],
+m22: [
+  { q: "El banco que emite la tarjeta al cliente es el:", a: ["Adquirente", "Emisor", "Comercio"], c: 1, w: "Issuer." },
+  { q: "Una compra con tarjeta usa mensajes:", a: ["ISO 27001", "ISO 8583", "SMTP"], c: 1, w: "Estándar de transacciones con tarjeta." },
+  { q: "El marco de seguridad de SWIFT es:", a: ["PCI DSS", "CSCF", "HIPAA"], c: 1, w: "Customer Security Controls Framework." },
+  { q: "El activo más crítico de un banco suele ser:", a: ["La impresora", "El core bancario y los sistemas de pago", "El correo"], c: 1, w: "Cuentas, saldos y transacciones." },
+],
+m23: [
+  { q: "PCI DSS tiene cuántos requisitos principales:", a: ["6", "12", "20"], c: 1, w: "12, agrupados en 6 objetivos." },
+  { q: "Segmentar el CDE sirve para:", a: ["Aumentar el alcance", "Reducir el alcance de la auditoría", "Eliminar PCI"], c: 1, w: "Menos sistemas evaluados." },
+  { q: "La ley colombiana de protección de datos personales es:", a: ["Ley 1273 de 2009", "Ley 1581 de 2012", "Ley 100 de 1993"], c: 1, w: "Habeas data." },
+  { q: "Un análisis de brechas compara:", a: ["Dos firewalls", "El estado actual contra un estándar", "Precios"], c: 1, w: "Gap assessment." },
+],
+m24: [
+  { q: "El SIM swap busca:", a: ["Robar el celular físico", "Recibir los códigos SMS de la víctima", "Cifrar el teléfono"], c: 1, w: "Por eso el SMS es débil." },
+  { q: "Una cuenta mula sirve para:", a: ["Ahorrar", "Mover y ocultar dinero robado", "Pagar impuestos"], c: 1, w: "Intermediario del fraude." },
+  { q: "En Colombia, el sistema de prevención de lavado se llama:", a: ["SARLAFT", "SOX", "DORA"], c: 0, w: "SARLAFT." },
+  { q: "Ante una transacción muy riesgosa, una buena práctica es:", a: ["Aprobarla siempre", "Confirmación fuera de banda o autenticación reforzada", "Pedir el PIN por correo"], c: 1, w: "Step-up authentication." },
+],
+m25: [
+  { q: "En la nube (IaaS), ¿quién configura los permisos IAM?", a: ["El proveedor", "El cliente", "Nadie"], c: 1, w: "Responsabilidad del cliente." },
+  { q: "La causa más común de incidentes en la nube es:", a: ["Fallas del hardware del proveedor", "Malas configuraciones", "Terremotos"], c: 1, w: "Misconfigurations." },
+  { q: "Un bucket S3 abierto al público provoca:", a: ["Más velocidad", "Fugas de datos", "Ahorro"], c: 1, w: "Exposición de datos sensibles." },
+  { q: "La cuenta root de AWS debe:", a: ["Usarse a diario", "Tener MFA y casi nunca usarse", "Compartirse"], c: 1, w: "Protégela y no la uses." },
+],
+m26: [
+  { q: "La función agregada en NIST CSF 2.0 es:", a: ["Detect", "Govern", "Recover"], c: 1, w: "Gobierno." },
+  { q: "ISO/IEC 27001 certifica:", a: ["Un firewall", "Un sistema de gestión de seguridad de la información", "Un antivirus"], c: 1, w: "El SGSI de la organización." },
+  { q: "El RPO mide:", a: ["El tiempo para recuperar el servicio", "La pérdida de datos aceptable", "El costo"], c: 1, w: "Recovery Point Objective." },
+  { q: "El riesgo de terceros se evalúa con:", a: ["Cuestionarios y cláusulas contractuales", "Un antivirus", "Nada"], c: 0, w: "Proveedores son una vía común de incidentes." },
+],
+m27: [
+  { q: "El dominio con más peso en Security+ SY0-701 es:", a: ["Conceptos generales", "Operaciones de seguridad", "Criptografía"], c: 1, w: "Operaciones de seguridad, 28%." },
+  { q: "En una pregunta que pide la 'MEJOR' respuesta conviene:", a: ["Responder rápido sin leer", "Descartar dos opciones y elegir la más completa", "Dejarla en blanco"], c: 1, w: "Estrategia de examen." },
+  { q: "El puntaje de aprobación de Security+ es:", a: ["600", "750", "900"], c: 1, w: "En escala de 100 a 900." },
+  { q: "Las preguntas basadas en desempeño (PBQ):", a: ["Se responden siempre primero", "Conviene dejarlas para el final si toman mucho tiempo", "No cuentan"], c: 1, w: "Gestiona bien el tiempo." },
+],
+};

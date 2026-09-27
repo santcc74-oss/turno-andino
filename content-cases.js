@@ -1,0 +1,173 @@
+/* Turno Andino — casos de los minijuegos. Ficticios y con enfoque defensivo.
+   cama: true = el Camaleón está detrás (cuenta para su expediente). */
+
+/* ——— Mensajes: correo, SMS, WhatsApp, QR. Se suman a window.PHISH de CyberRuta. ——— */
+window.MSGS = [
+  { ch: "SMS", from: "+57 321 555 0198", subj: "", body: "BancoAndino: Su tarjeta fue bloqueada por seguridad. Desbloquéela aquí: andino-desbloqueo.co/t/88", phish: true, cama: true,
+    why: "Smishing: el banco no manda enlaces para desbloquear tarjetas y el dominio no es el oficial." },
+  { ch: "WhatsApp", from: "Mamá (número nuevo)", subj: "", body: "Hola mijo, cambié de número. Estoy en un apuro, ¿me prestas 800.000? Te devuelvo mañana, consígnalos a esta cuenta.", phish: true,
+    why: "Suplantación de un familiar con «número nuevo» y urgencia por dinero. Llama al número de siempre antes de hacer algo." },
+  { ch: "QR", from: "Cartel en la sala de espera, puerta B7", subj: "Wi-Fi gratis del aeropuerto", body: "Escanea el código y entra con el usuario y la clave de tu banco para activar 2 horas de internet gratis.", phish: true, cama: true,
+    why: "Quishing: un QR pegado en un lugar público que pide credenciales del banco. Ningún Wi-Fi necesita tu clave bancaria." },
+  { ch: "Correo", from: "Aerolínea Andes <reservas@aerolineaandes.com>", subj: "Tu pase de abordar · vuelo AA 214", body: "Adjuntamos tu pase de abordar. También puedes verlo en la app o en aerolineaandes.com → Mis viajes.", phish: false,
+    why: "Coincide con un viaje que sí reservaste, el dominio es el de la aerolínea y te remite a la app que ya usas." },
+  { ch: "Correo", from: "Nómina <nomina@bancoandino.com.co>", subj: "Tu comprobante de pago de septiembre", body: "Tu comprobante ya está disponible en la intranet: Inicio → Gestión humana → Nómina. No respondas a este correo.", phish: false,
+    why: "Dominio corporativo, no hay enlaces ni adjuntos y te lleva a la intranet por el camino habitual." },
+  { ch: "Correo", from: "DocuSign <firma@docusign-andino.net>", subj: "Marta Quintero te envió un documento para firmar", body: "Revisa y firma el documento «Aumento salarial 2026». Inicia sesión con tu correo corporativo para verlo.", phish: true, cama: true,
+    why: "Cebo emocional (aumento), dominio que no es de DocuSign ni del banco y petición de credenciales corporativas." },
+  { ch: "SMS", from: "891234", subj: "", body: "Banco Andino: tu código de verificación es 482913. No lo compartas con nadie, ni siquiera con empleados del banco.", phish: false,
+    why: "Es un código que tú pediste, no trae enlace y te advierte que no lo compartas. Legítimo, pero nunca se lo dictes a nadie." },
+  { ch: "Correo", from: "IT Service Desk <helpdesk@bancoandino-it.support>", subj: "Action required: MFA re-enrollment", body: "Your multi-factor authentication will be disabled today. Scan the attached QR code with your phone to re-enroll.", phish: true, cama: true, en: true,
+    why: "Inglés + urgencia + QR para «reinscribir» el MFA desde un dominio que no es del banco. Así roban el segundo factor." },
+  { ch: "Correo", from: "Security Team <security@bancoandino.com.co>", subj: "Monthly phishing simulation results", body: "Thanks for reporting last week's simulated phishing email. Your department reached a 92% report rate. No action is needed.", phish: false, en: true,
+    why: "Informativo, sin enlaces ni pedidos, desde el dominio corporativo. Reportar simulacros es justo lo correcto." },
+  { ch: "WhatsApp", from: "Soporte Banco Andino ✔", subj: "", body: "Hola, somos del área de fraudes. Detectamos una compra en el exterior. Para anularla, dinos los 16 dígitos de tu tarjeta y la fecha de vencimiento.", phish: true, cama: true,
+    why: "El «chulito» de un perfil no prueba nada y el banco nunca pide el número completo de la tarjeta por chat." },
+  { ch: "Correo", from: "Proveedor Nube <billing@cloudprovider.com>", subj: "Invoice #4471 is available", body: "Your monthly invoice is ready. Sign in to the billing console you normally use to view it. We never ask for payment details by email.", phish: false, en: true,
+    why: "No trae enlaces, no pide datos y te manda a la consola que ya conoces. Aun así, confirma que el proveedor es uno que el banco usa." },
+  { ch: "SMS", from: "Transito-Multas", subj: "", body: "Tiene un comparendo pendiente por $487.300. Pague hoy con 50 % de descuento: pagosmultas-col.com", phish: true,
+    why: "Descuento que vence hoy, remitente genérico y dominio sin relación con una entidad oficial. Consulta en el sitio oficial escribiendo tú la dirección." },
+];
+
+/* ——— Llamadas (vishing y situaciones reales). ——— */
+window.CALLS = [
+  { who: "«Soporte de TI»", face: "stranger", from: "Número interno desconocido", say: "Hola, te hablo de la mesa de ayuda. Estamos migrando tu buzón y necesito tu contraseña para que no pierdas los correos. Es rápido.",
+    opts: ["Se la doy: es de TI y es rápido", "Le digo que no comparto claves, cuelgo y llamo yo a la mesa de ayuda (ext. 4400)", "Le doy solo la mitad de la clave"], c: 1, cama: true,
+    why: "TI nunca necesita tu contraseña. Cuelga y llama tú al número oficial: así verificas por un canal que controlas." },
+  { who: "Don Hernán, cliente", face: "hernan", from: "Línea de atención", say: "Me llamaron del banco, les di un código que me llegó por mensaje y ahora me aparece una transferencia que yo no hice.",
+    opts: ["Le digo que fue culpa suya por dar el código", "Bloqueo sus canales, reporto a fraude para intentar frenar la transferencia y le explico qué pasó", "Le pido que espere hasta mañana"], c: 1,
+    why: "Actuar rápido puede recuperar el dinero. Primero se contiene (bloqueo), luego se escala a fraude, y se educa sin culpar." },
+  { who: "«Logística SAS»", face: "stranger", from: "+57 601 555 0112", say: "Buenas, cambiamos de banco. Le envío por correo la nueva cuenta para que el pago de este mes vaya allá.",
+    opts: ["Actualizo la cuenta apenas llegue el correo", "Verifico llamando al número del proveedor que ya está registrado, no a este", "Le pido que lo mande por WhatsApp"], c: 1, cama: true,
+    why: "Fraude de cambio de cuenta (BEC). Se confirma siempre por un canal registrado previamente (callback)." },
+  { who: "«Auditor de la Superintendencia»", face: "stranger", from: "Celular", say: "Es urgente, estamos en inspección. Mándeme ya a mi correo personal el listado de tarjetas de clientes con fecha de vencimiento.",
+    opts: ["Lo envío: es un regulador", "Me niego, no envío datos de tarjetas por fuera de canales autorizados y escalo a Cumplimiento", "Envío solo los primeros 100"], c: 1, cama: true,
+    why: "PCI DSS prohíbe exponer datos de tarjetas. Los reguladores piden información por canales formales, nunca a un correo personal." },
+  { who: "Mesa de ayuda", face: "stranger", from: "Ext. 4400", say: "Hola, te llamo por el ticket que abriste esta mañana por la VPN. ¿Puedes reiniciar el equipo y contarme si ya conecta?",
+    opts: ["Cuelgo: toda llamada es sospechosa", "Reinicio y le cuento: yo abrí ese ticket y no me pide nada sensible", "Le doy mi clave para que lo revise remoto"], c: 1, legit: true,
+    why: "Tú abriste el ticket, llaman desde la extensión oficial y no piden datos sensibles. Desconfiar de todo tampoco es seguridad." },
+  { who: "Clienta en la línea de fraude", face: "clienta", from: "Línea de atención", say: "De repente mi celular se quedó sin señal y una hora después me llegaron correos de transferencias que no hice.",
+    opts: ["Le digo que reinicie el celular", "Sospecho SIM swapping: bloqueo sus productos, escalo a fraude y le pido contactar a su operador", "Le recomiendo cambiar el fondo de pantalla"], c: 1,
+    why: "Perder la señal de golpe y luego ver movimientos es el patrón del SIM swapping: alguien duplicó su línea para recibir sus códigos." },
+  { who: "«Aerolínea Andes»", face: "stranger", from: "+1 800 555 0144", say: "Su vuelo fue cancelado. Para reubicarlo hoy debe pagar un cargo de 120 dólares. ¿Me dicta los datos de su tarjeta?",
+    opts: ["Le dicto la tarjeta: necesito volar", "Cuelgo y reviso el estado del vuelo en la app oficial de la aerolínea", "Le doy la tarjeta pero no el código CVV"], c: 1, cama: true,
+    why: "Aprovechan el estrés del viaje. Revisa en la app oficial: si hay cambios, aparecen ahí." },
+  { who: "«Presidente del banco» (nota de voz)", face: "stranger", from: "WhatsApp", say: "La voz suena igual a la del presidente: «Necesito que liberes hoy un pago urgente de 200 millones. Estoy en un avión, no me llames».",
+    opts: ["Lo libero: es su voz", "Verifico por un canal independiente y aplico la doble aprobación del proceso de pagos", "Respondo la nota de voz pidiendo confirmación"], c: 1, cama: true,
+    why: "Las voces se pueden clonar con IA (deepfake). Ningún pago se salta el proceso de doble aprobación." },
+  { who: "Técnico de mantenimiento", face: "stranger", from: "En la puerta del cuarto de servidores", say: "Vengo a revisar el aire acondicionado. ¿Me abres? Se me quedó el carné en la camioneta.",
+    opts: ["Le abro: tiene uniforme", "Le pido esperar y confirmo con seguridad física que hay una orden de trabajo; si entra, va escoltado", "Le presto mi carné"], c: 1,
+    why: "Pretexting y tailgating: el uniforme no autoriza. Se verifica la orden de trabajo y se escolta." },
+  { who: "Marta Quintero", face: "marta", from: "Ext. 2010 (tu jefa)", say: "Oye, se cayó el SIEM en Quito. ¿Puedes abrir un incidente y avisar al equipo de infraestructura por el canal oficial?",
+    opts: ["Abro el incidente y aviso por el canal oficial", "Le pido que me lo mande por escrito antes de hacer nada", "Cuelgo: podría ser el Camaleón"], c: 0, legit: true,
+    why: "Es tu jefa, desde su extensión, y te pide seguir el proceso normal, sin saltarse controles ni pedir datos. Actúa." },
+];
+
+/* ——— Cazador de logs: toca la línea sospechosa. ——— */
+window.LOGS = [
+  { src: "Windows · Security", tags: ["BOG", "GRU"], lines: [
+    "08:01 4624 Logon OK   user=lrojas   src=10.20.5.14",
+    "08:02 4625 Logon FAIL user=admin    src=45.155.204.19",
+    "08:02 4625 Logon FAIL user=admin    src=45.155.204.19",
+    "08:02 4625 Logon FAIL user=admin    src=45.155.204.19",
+    "08:03 4624 Logon OK   user=admin    src=45.155.204.19",
+    "08:10 4624 Logon OK   user=mgomez   src=10.20.5.31"], bad: 4,
+    why: "Varios fallos (4625) y luego un acceso exitoso (4624) desde la misma IP externa: la fuerza bruta funcionó." },
+  { src: "Linux · /var/log/auth.log", tags: ["MDE"], lines: [
+    "sshd: Accepted publickey for lrojas from 10.20.5.14",
+    "sshd: Accepted publickey for deploy from 10.20.8.2",
+    "sshd: Accepted password for root from 103.77.12.9",
+    "sudo: lrojas : COMMAND=/usr/bin/systemctl status nginx",
+    "sshd: Disconnected from user deploy 10.20.8.2"], bad: 2,
+    why: "Root entrando con contraseña desde una IP externa. Eso no debería ser posible: PermitRootLogin debe estar en no." },
+  { src: "Linux · useradd", tags: ["MDE", "GRU"], lines: [
+    "useradd: new user: name=pcastro, UID=1004",
+    "passwd: password changed for pcastro",
+    "useradd: new user: name=sysupd, UID=0",
+    "usermod: add 'pcastro' to group 'reportes'"], bad: 2,
+    why: "UID 0 significa privilegios de root. Una cuenta nueva con UID 0 es persistencia típica de un intruso." },
+  { src: "Linux · syslog (cron)", tags: ["MDE"], lines: [
+    "CRON: (root) CMD (/usr/sbin/logrotate /etc/logrotate.conf)",
+    "CRON: (backup) CMD (/opt/backup/nightly.sh)",
+    "CRON: (backup) CMD (/tmp/.x11-cache/minero.sh)",
+    "CRON: (root) CMD (/usr/bin/apt-get -qq update)"], bad: 2,
+    why: "Un script en una carpeta oculta dentro de /tmp ejecutado por cron: persistencia y probablemente un minero." },
+  { src: "Web · banca en línea", tags: ["MEX", "LIM"], lines: [
+    "GET /cuentas/88213/saldo 200",
+    "GET /productos?tipo=cdt 200",
+    "GET /productos?tipo=' OR '1'='1 500",
+    "POST /login 200",
+    "GET /ayuda/preguntas 200"], bad: 2,
+    why: "Una comilla y OR '1'='1 en un parámetro es un intento de inyección SQL. El error 500 indica que la entrada no se valida." },
+  { src: "Web · servidor de documentos", tags: ["MEX"], lines: [
+    "GET /docs/extracto-sep.pdf 200",
+    "GET /docs/../../../../etc/passwd 403",
+    "GET /docs/tarifas.pdf 200",
+    "GET /img/logo.svg 200"], bad: 1,
+    why: "Los ../ intentan salir de la carpeta permitida (path traversal). Bien que respondió 403, pero hay que investigar la IP." },
+  { src: "Firewall · salida", tags: ["UIO", "GRU"], lines: [
+    "09:12 ALLOW 10.20.5.14 → 142.250.78.4:443",
+    "09:13 ALLOW 10.20.5.31 → 10.20.8.5:5432",
+    "03:47 ALLOW 10.20.6.77 → 185.220.101.9:4444",
+    "09:15 ALLOW 10.20.5.14 → 104.18.2.1:443"], bad: 2,
+    why: "Un equipo de contabilidad conectando a las 3:47 a.m. a un puerto poco común (4444) en una IP externa: posible canal de mando y control." },
+  { src: "DNS · consultas", tags: ["UIO", "GRU"], lines: [
+    "www.bancoandino.com.co A",
+    "login.microsoftonline.com A",
+    "a9f3k2l0q8x7v1b5n6m4z2c8.d7e3.exfil-cdn.net TXT",
+    "fonts.gstatic.com A"], bad: 2,
+    why: "Subdominios larguísimos y aleatorios con consultas TXT: patrón de túnel DNS para sacar datos." },
+  { src: "Banca · inicios de sesión", tags: ["PTY"], lines: [
+    "10:02 user=agarcia Bogotá, CO app=móvil",
+    "10:11 user=agarcia Bogotá, CO app=móvil",
+    "10:14 user=agarcia Lagos, NG app=web",
+    "10:20 user=mgomez Medellín, CO app=móvil"], bad: 2,
+    why: "Viaje imposible: la misma cuenta en Bogotá y 3 minutos después en otro continente. Credenciales robadas." },
+  { src: "Tarjetas · autorizaciones", tags: ["PTY"], lines: [
+    "tarjeta *4821 $1.000 tienda-online-1 APROBADA",
+    "tarjeta *4821 $1.000 tienda-online-2 APROBADA",
+    "tarjeta *4821 $1.000 tienda-online-3 APROBADA",
+    "tarjeta *4821 $3.890.000 electro-mundo APROBADA",
+    "tarjeta *7710 $52.000 supermercado APROBADA"], bad: 3,
+    why: "Varias compras mínimas para probar que la tarjeta funciona (card testing) y después una compra grande. La grande es el fraude." },
+  { src: "Microsoft 365 · auditoría", tags: ["GRU", "SCL"], lines: [
+    "UserLoggedIn user=tesoreria@bancoandino.com.co",
+    "MailItemsAccessed user=tesoreria@...",
+    "New-InboxRule 'x' ForwardTo=pagos.tesoreria@gmail.com",
+    "Send user=tesoreria@... subject=Informe diario"], bad: 2,
+    why: "Una regla que reenvía el correo de tesorería a Gmail: el atacante espía para preparar un fraude BEC." },
+  { src: "EDR · procesos", tags: ["GRU", "BOG"], lines: [
+    "explorer.exe → chrome.exe",
+    "outlook.exe → winword.exe Factura_0921.docm",
+    "winword.exe → powershell.exe -enc SQBFAFgAIAAo...",
+    "services.exe → svchost.exe"], bad: 2,
+    why: "Word no debería abrir PowerShell con un comando codificado (-enc). Es la firma de una macro maliciosa." },
+];
+
+/* ——— Ordena los pasos. steps va en el orden correcto. ——— */
+window.ORDERS = [
+  { title: "Respuesta a incidentes (NIST 800-61)", tags: ["GRU", "MAD", "SCL"],
+    steps: ["Preparación", "Detección y análisis", "Contención", "Erradicación", "Recuperación", "Lecciones aprendidas"],
+    why: "Primero te preparas, luego detectas, contienes el daño, eliminas la causa, recuperas y aprendes." },
+  { title: "Un usuario reporta un phishing", tags: ["MEX", "GRU", "PTY"],
+    steps: ["Analizar enlaces y adjuntos en un entorno seguro", "Buscar a quién más le llegó", "Borrar el correo de todos los buzones", "Bloquear el dominio y la URL", "Cambiar la clave de quien hizo clic"],
+    why: "Entender, medir el alcance, contener, bloquear indicadores y remediar a los afectados." },
+  { title: "Saludo de tres vías de TCP", tags: ["UIO"],
+    steps: ["El cliente envía SYN", "El servidor responde SYN-ACK", "El cliente responde ACK", "Empiezan a viajar los datos"],
+    why: "SYN, SYN-ACK, ACK. Un escaneo que solo manda SYN deja conexiones a medias." },
+  { title: "Orden de volatilidad (forense)", tags: ["GRU", "BOG"],
+    steps: ["Registros y caché de la CPU", "Memoria RAM", "Conexiones de red y procesos", "Disco", "Respaldos y logs remotos"],
+    why: "Se recoge primero lo que desaparece más rápido. Por eso no se apaga un equipo comprometido." },
+  { title: "Ciclo de gestión de vulnerabilidades", tags: ["MEX", "MAD"],
+    steps: ["Inventariar los activos", "Escanear vulnerabilidades", "Priorizar por riesgo", "Parchar o mitigar", "Verificar que quedó corregido"],
+    why: "No puedes proteger lo que no sabes que tienes; y sin verificar, no sabes si el parche funcionó." },
+  { title: "Compra con tarjeta en un datáfono", tags: ["PTY"],
+    steps: ["El cliente paga en el datáfono", "El adquirente recibe la transacción", "La red de la marca la enruta", "El banco emisor aprueba o niega", "La respuesta vuelve al comercio"],
+    why: "Comercio → adquirente → red (Visa, Mastercard) → emisor, y de vuelta en segundos." },
+  { title: "Funciones del NIST CSF 2.0", tags: ["MAD", "SCL"],
+    steps: ["Gobernar", "Identificar", "Proteger", "Detectar", "Responder", "Recuperar"],
+    why: "La versión 2.0 agregó Gobernar, que va primero y envuelve a todas las demás." },
+];
+
+/* ——— Palabras para los retos de decodificación. ——— */
+window.DECODE_WORDS = ["ALERTA", "BOVEDA", "TOKEN", "CIFRADO", "PARCHE", "ANDINO", "FIREWALL", "HASH", "LLAVE", "BACKUP", "MALWARE", "SESION", "PUERTO", "RED"];
