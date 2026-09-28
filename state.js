@@ -11,6 +11,7 @@
     cama: { caught: 0, missed: 0 },
     streak: { cur: 0, best: 0, last: "", freezeWeek: -1 },
     flashBest: 0, cur: null, exam: null, mapSeen: 1,
+    st: {}, dom: {}, ach: {}, daily: null, weekly: null,
   });
 
   function merge(raw) {
@@ -143,6 +144,18 @@
     else { const w = S.wrong[id] || { n: 0 }; w.n += 1; w.due = S.shifts + 1; S.wrong[id] = w; }
   }
   const dueReview = () => Object.keys(S.wrong).filter((id) => S.wrong[id].due <= S.shifts + 1);
+
+  /* Reemplaza las opciones incorrectas por las de data/distractors.js (la correcta queda en su lugar). */
+  function applyDistractors() {
+    Object.entries(window.DISTRACTORS || {}).forEach(([id, wrongs]) => {
+      const q = quizById(id);
+      if (!q || !Array.isArray(q.a) || wrongs.length !== q.a.length - 1) return;
+      const a = wrongs.slice();
+      a.splice(q.c, 0, q.a[q.c]);
+      q.a = a;
+    });
+  }
+  applyDistractors();
 
   window.TA = {
     get S() { return S; }, save, reset, load, LS_KEY,

@@ -6,6 +6,12 @@ Eres analista del SOC del Banco Andino, un banco ficticio. Cada turno dura unos 
 
 **Jugar:** https://santcc74-oss.github.io/turno-andino/
 
+## Qué hay adentro
+
+- **11 minijuegos:** phishing por correo, SMS, WhatsApp y QR; llamadas de estafadores; cazar la línea sospechosa en logs; **revisión de código real** (Python, Java, JavaScript, configuraciones); **encabezados de correo** con SPF, DKIM y DMARC; **consultas de SIEM** en KQL, SPL y Wazuh; **priorización de CVE reales** (Log4Shell, EternalBlue, MOVEit, Zerologon…); procedimientos, puertos, cifrados y preguntas del equipo.
+- **Examen de sede** para ganar cada sello del pasaporte.
+- **46 logros** en bronce, plata y oro, **misiones diarias y semanales**, y un medidor de **preparación para Security+** por dominio del SY0-701.
+
 ## Instalarlo en el iPhone
 
 1. Abre el enlace en **Safari**.

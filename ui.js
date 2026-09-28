@@ -74,6 +74,8 @@
         </div>
       </section>
 
+      ${missionsCard()}
+
       <section class="duo-cards">
         <button class="card-btn" id="h-flash">
           <span class="eyebrow">60 segundos</span><b>Repaso relámpago</b>
@@ -95,6 +97,22 @@
         <p><small>El Camaleón</small>Lo has atrapado ${S.cama.caught} ${S.cama.caught === 1 ? "vez" : "veces"}.
         ${nextDossier ? "Atrápalo " + (nextDossier[0] - S.cama.caught) + " más para abrir la siguiente página de su expediente." : "Su expediente está completo."}</p>
       </section>`;
+  }
+
+  function missionsCard() {
+    const m = PROG.missions();
+    const row = (x, weekly) => `<li class="${x.claimed ? "claimed" : x.done ? "done" : ""} ${weekly ? "weekly" : ""}">
+      <div class="ms-t"><span>${esc(x.text)}</span><span class="mono small">${x.prog}/${x.goal}</span></div>
+      <div class="bar sm"><i style="width:${(x.prog / x.goal) * 100}%"></i></div>
+      ${x.claimed ? `<span class="st done">Cobrada</span>` : x.done ? `<button class="btn primary claim" data-id="${x.id}">Cobrar ${TA.money(weekly ? m.weeklyPay.money : m.pay.money)} · +${weekly ? m.weeklyPay.xp : m.pay.xp} rep.</button>` : ""}
+    </li>`;
+    return `<section class="missions" aria-label="Misiones">
+      <div class="ms-head"><p class="eyebrow">Misiones de hoy</p><span class="small">Se renuevan a medianoche</span></div>
+      <ul>${m.daily.map((x) => row(x, false)).join("")}</ul>
+      <p class="small">${m.bonus ? "Bono del día cobrado." : `Cobra las 3 y ganas ${TA.money(m.bonusPay)} extra.`}</p>
+      <div class="ms-head"><p class="eyebrow">Misión de la semana</p></div>
+      <ul>${row(m.weekly, true)}</ul>
+    </section>`;
   }
 
   /* ——— Rutas ——— */
@@ -160,33 +178,47 @@
       <ul class="shop">${items}</ul>`;
   }
 
-  /* ——— Pasaporte ——— */
+  /* ——— Pasaporte: sellos, logros, carrera y expediente ——— */
+  let passTab = "sellos";
+  const PASS_TABS = [["sellos", "Sellos"], ["logros", "Logros"], ["carrera", "Carrera"], ["cama", "Camaleón"]];
   function pasaporte() {
     const S = TA.S, ri = TA.rankIndex(S.xp);
-    const stamps = CITIES.map((c, i) => S.stamps[c.code]
-      ? `<li>${ART.stamp(c, i, S.stamps[c.code])}<small>${esc(c.city)}</small></li>`
-      : `<li class="empty"><span class="mono">${c.code}</span><small>${esc(c.city)}</small></li>`).join("");
-    const ladder = CAREER.map((c, i) => `<li class="${i < ri ? "past" : i === ri ? "now" : ""}"><span class="mono">${c[0].toLocaleString("es-CO")}</span><b>${esc(c[1])}</b><small>${TA.money(c[2])}/turno</small></li>`).join("");
-    const doss = DOSSIER.map((d) => S.cama.caught >= d[0]
-      ? `<li><b>${esc(d[1])}</b><p>${esc(d[2])}</p></li>`
-      : `<li class="locked"><b>Página cerrada</b><p>Atrápalo ${d[0]} ${d[0] === 1 ? "vez" : "veces"} para leerla.</p></li>`).join("");
     const nStamps = Object.keys(S.stamps).length;
+    const ach = PROG.achievements(), nGot = ach.filter((a) => a.got).length;
+    const tabs = `<div class="seg" role="tablist">${PASS_TABS.map(([k, l]) => `<button role="tab" data-tab="${k}" aria-selected="${passTab === k}">${l}</button>`).join("")}</div>`;
+    let body = "";
+    if (passTab === "sellos") {
+      const stamps = CITIES.map((c, i) => S.stamps[c.code]
+        ? `<li>${ART.stamp(c, i, S.stamps[c.code])}<small>${esc(c.city)}</small></li>`
+        : `<li class="empty"><span class="mono">${c.code}</span><small>${esc(c.city)}</small></li>`).join("");
+      body = `<p class="small">${nStamps} de ${CITIES.length} sellos. Cada sello es un tema que ya dominas.</p><ul class="stamps">${stamps}</ul>`;
+    } else if (passTab === "logros") {
+      const tiers = ["oro", "plata", "bronce"].map((t) => `<span class="tier-n t-${t}">${ach.filter((a) => a.got && a.tier === t).length} ${t}</span>`).join("");
+      const groups = [...new Set(ach.map((a) => a.group))];
+      body = `<p class="small">${nGot} de ${ach.length} logros. Cada logro paga: bronce ₳ 30, plata ₳ 80, oro ₳ 200.</p>
+        <div class="tiers">${tiers}</div>
+        ${groups.map((g) => `<section class="ach-group"><h2>${esc(g)}</h2><ul class="achs">${ach.filter((a) => a.group === g).map((a) => {
+          const hidden = a.secret && !a.got;
+          return `<li class="${a.got ? "got" : ""}">${PROG.medal(a, 40)}
+            <div><b>${hidden ? "Logro secreto" : esc(a.name)}</b><small>${hidden ? "Sigue jugando para descubrirlo." : esc(a.desc)}</small>
+            ${a.got ? `<span class="small mono">${a.got}</span>` : hidden ? "" : `<div class="bar sm"><i style="width:${(a.cur / a.goal) * 100}%"></i></div><span class="small mono">${a.cur}/${a.goal}</span>`}</div>
+          </li>`; }).join("")}</ul></section>`).join("")}`;
+    } else if (passTab === "carrera") {
+      const ladder = CAREER.map((c, i) => `<li class="${i < ri ? "past" : i === ri ? "now" : ""}"><span class="mono">${c[0].toLocaleString("es-CO")}</span><b>${esc(c[1])}</b><small>${TA.money(c[2])}/turno</small></li>`).join("");
+      body = `<ol class="ladder">${ladder}</ol>`;
+    } else {
+      const doss = DOSSIER.map((d) => S.cama.caught >= d[0]
+        ? `<li><b>${esc(d[1])}</b><p>${esc(d[2])}</p></li>`
+        : `<li class="locked"><b>Página cerrada</b><p>Atrápalo ${d[0]} ${d[0] === 1 ? "vez" : "veces"} para leerla.</p></li>`).join("");
+      body = `<div class="cama-head">${ART.portrait("cama", S.cama.caught >= 22 ? "caught" : "smug")}<p class="small">Atrapado ${S.cama.caught} · Se escapó ${S.cama.missed}</p></div><ul class="dossier">${doss}</ul>`;
+    }
     return `
       <section class="head">
         <p class="eyebrow">República del SOC · Pasaporte laboral</p>
         <h1>Pasaporte</h1>
-        <p>${nStamps} de ${CITIES.length} sellos. Cada sello es un tema que ya dominas.</p>
       </section>
-      <ul class="stamps">${stamps}</ul>
-      <section class="block">
-        <h2>Tu carrera</h2>
-        <ol class="ladder">${ladder}</ol>
-      </section>
-      <section class="block">
-        <h2>Expediente del Camaleón</h2>
-        <p class="small">Atrapado ${S.cama.caught} · Se escapó ${S.cama.missed}</p>
-        <ul class="dossier">${doss}</ul>
-      </section>`;
+      ${tabs}
+      <div class="seg-body">${body}</div>`;
   }
 
   /* ——— Perfil ——— */
@@ -205,6 +237,7 @@
         <div><dt>Récord relámpago</dt><dd>${S.flashBest}</dd></div>
         <div><dt>Por repasar</dt><dd>${Object.keys(S.wrong).length}</dd></div>
       </dl>
+      ${securityPlus()}
       <section class="block">
         <h2>Instálalo en tu iPhone</h2>
         <ol class="steps">
@@ -230,6 +263,20 @@
       <p class="small">Turno Andino no usa sonido ni internet durante el juego. Personajes, banco y casos son ficticios.</p>`;
   }
 
+  function securityPlus() {
+    const r = PROG.readiness();
+    return `<section class="block">
+      <h2>Preparación para Security+</h2>
+      <div class="ready"><span class="ready-n">${r.pct}<small>%</small></span>
+        <p class="small">Estimación del juego según tus aciertos en los 5 dominios del examen SY0-701, ponderados por su peso. Cuenta completo cuando llevas 25 respuestas en un dominio. No es un puntaje oficial de CompTIA.</p></div>
+      <ul class="doms">${r.rows.map((d) => `<li>
+        <div class="dom-t"><span><b>${d.d}.</b> ${esc(d.name)}</span><span class="mono small">${d.w} %</span></div>
+        <div class="bar sm ${d.n && d.acc < 0.7 ? "weak" : ""}"><i style="width:${Math.round(d.acc * 100)}%"></i></div>
+        <span class="small">${d.n ? Math.round(d.acc * 100) + " % de aciertos en " + d.n + " respuestas" : "Sin respuestas todavía"}${d.n && d.acc < 0.7 ? " · tema para reforzar" : ""}</span>
+      </li>`).join("")}</ul>
+    </section>`;
+  }
+
   const VIEWS = { hoy, rutas, vida, pasaporte, perfil };
 
   function go(name) {
@@ -246,6 +293,12 @@
     on("h-start", () => PLAY.start());
     on("h-resume", () => PLAY.resume());
     on("h-flash", () => PLAY.flash());
+    document.querySelectorAll(".claim").forEach((b) => b.onclick = () => {
+      const r = PROG.claim(b.dataset.id);
+      if (r) PROG.toast({ kind: "mission", title: "Cobraste la misión", text: "+" + TA.money(r.money) + " · +" + r.xp + " rep.", sub: r.bonus ? "Incluye el bono del día" : "" });
+      go("hoy");
+    });
+    document.querySelectorAll(".seg button").forEach((b) => b.onclick = () => { passTab = b.dataset.tab; go("pasaporte"); });
     on("h-exam", () => PLAY.exam(TA.S.city));
     on("h-exam-resume", () => PLAY.exam(TA.S.exam.city));
     on("rt-exam", () => PLAY.exam(TA.S.city));
@@ -268,7 +321,7 @@
     document.querySelectorAll(".buy").forEach((b) => b.onclick = () => {
       const it = ITEMS.find((x) => x.id === b.dataset.id);
       if (!it || TA.S.money < it.price || TA.has(it.id)) return;
-      TA.S.money -= it.price; TA.S.owned[it.id] = TA.dayKey(); TA.save(); go("vida");
+      TA.S.money -= it.price; TA.S.owned[it.id] = TA.dayKey(); TA.save(); PROG.buy(it.id); go("vida");
     });
     on("pf-copy", () => {
       const txt = JSON.stringify(Object.assign({}, TA.S, { app: "turno-andino" }));
@@ -324,7 +377,9 @@
     document.querySelectorAll(".tabs button").forEach((b) => b.onclick = () => go(b.dataset.v));
     let tab = "hoy";
     try { tab = localStorage.getItem("turno-andino-tab") || "hoy"; } catch (e) {}
+    PROG.ensureMissions();
     go(tab);
+    PROG.check();
     if (!TA.S.intro) intro();
     /* En localhost solo se activa con #sw, para que los cambios se vean al recargar mientras se desarrolla. */
     const dev = /^(localhost|127\.0\.0\.1)$/.test(location.hostname) && location.hash !== "#sw";

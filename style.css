@@ -495,6 +495,102 @@ textarea { width: 100%; font-size: .8rem; padding: 10px; border-radius: 10px; bo
 @keyframes pop { from { transform: scale(0) rotate(-40deg); } }
 .star.on:nth-child(2) { --lift: -8px; }
 
+/* ——— Fase 1: misiones, logros, Security+ y minijuegos reales ——— */
+.bar.sm { height: 6px; }
+.bar.weak i { background: var(--danger); }
+
+.missions { display: flex; flex-direction: column; gap: 10px; padding: 16px; border-radius: var(--r); background: var(--card); border: 1px solid var(--line); }
+.ms-head { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; flex-wrap: wrap; }
+.missions ul { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 12px; }
+.missions li { display: flex; flex-direction: column; gap: 6px; }
+.missions li.weekly .bar i { background: var(--teal); }
+.missions li.claimed { opacity: .6; }
+.missions li.done .bar i { background: var(--teal); }
+.ms-t { display: flex; justify-content: space-between; gap: 10px; font-size: .95rem; }
+.missions .st { align-self: flex-start; }
+.btn.claim { min-height: 42px; font-size: .9rem; padding: 8px 12px; animation: nudge 1.2s ease-in-out 2; }
+@keyframes nudge { 50% { transform: scale(1.03); } }
+
+/* Pestañas del pasaporte */
+.seg { display: grid; grid-template-columns: repeat(4, 1fr); gap: 4px; padding: 4px; border-radius: 12px; background: var(--card-2); }
+.seg button { appearance: none; border: 0; background: transparent; color: var(--muted); font: 600 .85rem/1 var(--f-body); padding: 10px 4px; border-radius: 9px; cursor: pointer; min-height: 40px; }
+.seg button[aria-selected="true"] { background: var(--card); color: var(--ink); box-shadow: var(--shadow); }
+.seg-body { display: flex; flex-direction: column; gap: 14px; }
+
+/* Logros */
+.tiers { display: flex; gap: 8px; flex-wrap: wrap; }
+.tier-n { font: 600 .75rem/1 var(--f-mono); text-transform: uppercase; letter-spacing: .08em; padding: 7px 10px; border-radius: 8px; background: var(--card); border: 1px solid var(--line); }
+.tier-n.t-oro { color: #B7862A; } .tier-n.t-plata { color: #7C8898; } .tier-n.t-bronce { color: #A2673C; }
+.ach-group { display: flex; flex-direction: column; gap: 8px; }
+.ach-group h2 { font-size: 1.05rem; }
+.achs { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; }
+.achs li { display: grid; grid-template-columns: 40px 1fr; gap: 12px; align-items: center; padding: 10px 0; border-bottom: 1px solid var(--line); }
+.achs li > div { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+.achs li small { color: var(--muted); font-size: .82rem; line-height: 1.35; }
+.achs li:not(.got) b { color: var(--muted); }
+.medal { display: block; overflow: visible; }
+.cama-head { display: flex; align-items: center; gap: 12px; }
+
+/* Avisos (logros y misiones) */
+#toasts { position: fixed; left: 0; right: 0; top: calc(10px + env(safe-area-inset-top, 0px)); z-index: 60; display: flex; justify-content: center; pointer-events: none; padding: 0 16px; }
+.toast {
+  width: 100%; max-width: 420px; display: flex; gap: 12px; align-items: center; padding: 12px 14px; border-radius: 16px;
+  background: var(--night); color: var(--night-ink); border: 1px solid rgba(224, 172, 82, .5); box-shadow: 0 10px 30px rgba(0, 0, 0, .3); animation: drop .35s cubic-bezier(.2, .9, .3, 1.2) both;
+}
+.toast.out { animation: lift .3s ease-in both; }
+@keyframes drop { from { transform: translateY(-40px); opacity: 0; } }
+@keyframes lift { to { transform: translateY(-40px); opacity: 0; } }
+.toast div { display: flex; flex-direction: column; min-width: 0; }
+.toast small { font: 500 .66rem/1.3 var(--f-mono); text-transform: uppercase; letter-spacing: .12em; color: #E0AC52; }
+.toast b { font-family: var(--f-display); font-size: 1.05rem; line-height: 1.2; }
+.toast span { font-size: .82rem; color: #9FB0C6; }
+.t-check { flex: none; width: 34px; height: 34px; border-radius: 50%; display: grid; place-items: center; background: #0F7A74; color: #fff !important; font-size: 1.1rem !important; font-weight: 700; }
+
+/* Revisión de código */
+.code { background: #0D1622; border-radius: var(--r); padding: 8px 0; overflow-x: auto; }
+.code-line {
+  appearance: none; display: grid; grid-template-columns: 2.2em 1fr; gap: 8px; width: 100%; text-align: left; border: 1px solid transparent;
+  background: transparent; color: #D6DFEA; font-size: .76rem; line-height: 1.5; padding: 7px 10px; cursor: pointer; min-height: 40px; white-space: pre-wrap; overflow-wrap: anywhere;
+}
+.code-line:disabled { cursor: default; min-height: 0; }
+.code-line .ln { color: #5A6B82; text-align: right; user-select: none; }
+.code-line.right { border-color: #45BDB3; background: #0F2A2A; }
+.code-line.wrong { border-color: #EC7A64; background: #2E1612; }
+.hl-s { color: #E6C07B; } .hl-c { color: #7F8EA3; font-style: italic; } .hl-k { color: #7FC8F8; }
+.sheet-fix { display: flex; flex-direction: column; gap: 4px; }
+.sheet-fix small { font: 500 .7rem/1.3 var(--f-mono); text-transform: uppercase; letter-spacing: .1em; color: var(--teal); }
+.sheet-fix code { display: block; background: #0D1622; color: #D6DFEA; padding: 10px; border-radius: 8px; font-size: .76rem; line-height: 1.5; white-space: pre-wrap; overflow-wrap: anywhere; }
+
+/* Encabezados de correo */
+.hdrs { background: var(--card); border: 1px solid var(--line); border-radius: var(--r); padding: 10px 12px; font-size: .74rem; line-height: 1.55; overflow-wrap: anywhere; }
+.hdrs p { padding: 1px 6px; border-radius: 5px; border-left: 3px solid transparent; white-space: pre-wrap; }
+.hdrs p.clue { background: var(--brass-soft); border-left-color: var(--brass); }
+
+/* Consultas del SIEM */
+.code-opts .opt { font: 400 .76rem/1.5 var(--f-mono); overflow-wrap: anywhere; }
+
+/* Vulnerabilidades */
+.cves { display: flex; flex-direction: column; gap: 8px; }
+.cve {
+  appearance: none; text-align: left; display: flex; flex-direction: column; gap: 6px; padding: 14px; border-radius: 14px;
+  border: 1.5px solid var(--line); background: var(--card); color: var(--ink); font: inherit; cursor: pointer;
+}
+.cve:disabled { cursor: default; }
+.cve.right { border-color: var(--teal); background: var(--teal-soft); }
+.cve.wrong { border-color: var(--danger); background: var(--danger-soft); }
+.cve-top { display: flex; justify-content: space-between; gap: 8px; align-items: center; flex-wrap: wrap; font-size: .8rem; }
+.cve-tags { display: flex; gap: 6px; flex-wrap: wrap; }
+.sev { font: 600 .7rem/1 var(--f-mono); padding: 5px 7px; border-radius: 6px; color: #fff; }
+.sev-crit { background: #8E1F12; } .sev-high { background: #B83A26; } .sev-med { background: #B7791F; } .sev-low { background: #56637A; }
+
+/* Security+ */
+.ready { display: grid; grid-template-columns: auto 1fr; gap: 14px; align-items: center; }
+.ready-n { font: 800 3rem/1 var(--f-display); color: var(--brass); }
+.ready-n small { font-size: 1.2rem; }
+.doms { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 12px; }
+.doms li { display: flex; flex-direction: column; gap: 5px; }
+.dom-t { display: flex; justify-content: space-between; gap: 10px; font-size: .9rem; }
+
 @media (max-width: 360px) {
   .iata { font-size: 2.4rem; }
   .pass-stub dl { grid-template-columns: repeat(2, 1fr); }

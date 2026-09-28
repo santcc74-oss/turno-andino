@@ -34,6 +34,17 @@
   function logTicket(i) { return Object.assign({ type: "log", id: "l" + i }, LOGS[i]); }
   function orderTicket(o) { return { type: "order", title: o.title, steps: o.steps, deck: shuffle(o.steps.map((_, i) => i)), why: o.why }; }
 
+  function codeTicket(i) { return Object.assign({ type: "code", id: "k" + i }, CODE[i]); }
+  function headerTicket(i) { return Object.assign({ type: "header", id: "h" + i }, HEADERS[i]); }
+  function siemTicket(i) {
+    const q = SIEMQ[i];
+    return { type: "siem", id: "s" + i, lang: q.lang, q: q.q, why: q.why, opts: shuffle(q.opts.map((t, k) => ({ t, ok: k === q.c }))) };
+  }
+  function cveTicket(i) {
+    const c = CVES[i];
+    return { type: "cve", id: "v" + i, why: c.why, items: shuffle(c.items.map((x, k) => Object.assign({ ok: k === c.c }, x))) };
+  }
+
   function tagged(list, code) {
     const idx = list.map((x, i) => i).filter((i) => (list[i].tags || []).includes(code));
     return idx.length ? idx : list.map((x, i) => i);
@@ -97,12 +108,24 @@
     if (type === "decode") return decodeTicket(city.code);
     if (type === "ports") return portsTicket();
     if (type === "english") return englishTicket(city);
+    const byPrefix = (list, prefix, make, useTags) => {
+      const idx = useTags ? tagged(list, city.code) : list.map((x, i) => i);
+      return make(+pick(fresh(idx.map((i) => prefix + i))).slice(1));
+    };
+    if (type === "code") return byPrefix(CODE, "k", codeTicket, true);
+    if (type === "header") return byPrefix(HEADERS, "h", headerTicket, false);
+    if (type === "siem") return byPrefix(SIEMQ, "s", siemTicket, true);
+    if (type === "cve") return byPrefix(CVES, "v", cveTicket, false);
     return null;
   }
   function ticketFromId(id) {
     if (/^[pg]\d+$/.test(id)) return msgTicket(id);
     if (/^c\d+$/.test(id)) return CALLS[+id.slice(1)] ? callTicket(+id.slice(1)) : null;
     if (/^l\d+$/.test(id)) return LOGS[+id.slice(1)] ? logTicket(+id.slice(1)) : null;
+    if (/^k\d+$/.test(id)) return CODE[+id.slice(1)] ? codeTicket(+id.slice(1)) : null;
+    if (/^h\d+$/.test(id)) return HEADERS[+id.slice(1)] ? headerTicket(+id.slice(1)) : null;
+    if (/^s\d+$/.test(id)) return SIEMQ[+id.slice(1)] ? siemTicket(+id.slice(1)) : null;
+    if (/^v\d+$/.test(id)) return CVES[+id.slice(1)] ? cveTicket(+id.slice(1)) : null;
     return quizTicket(id);
   }
 
@@ -212,7 +235,8 @@
     if (t.type === "quiz") S.seen[t.id] = 1;
     let cama = null;
     if (t.cama) { cama = ok ? "caught" : "missed"; S.cama[cama] += 1; }
-    cur.res.push({ ok, type: t.type, id: t.id || null, label: shortLabel(t) });
+    cur.res.push({ ok, type: t.type, id: t.id || null, label: shortLabel(t), cama });
+    PROG.ticket(t, ok, fast, cama);
     cur.fb = { ok, gain, fast, hit, shielded, cama, extra: extra || "" };
     TA.save();
     const head = $(".p-head", play());
@@ -228,6 +252,10 @@
     if (t.type === "call") return "Llamada: " + t.who;
     if (t.type === "log") return "Log: " + t.src;
     if (t.type === "order") return "Orden: " + t.title;
+    if (t.type === "code") return "Código: " + t.title;
+    if (t.type === "header") return "Encabezados de correo";
+    if (t.type === "siem") return "SIEM: " + t.q;
+    if (t.type === "cve") return "Priorizar vulnerabilidades";
     return t.label || t.prompt;
   }
 
@@ -247,6 +275,7 @@
       ${right ? `<p class="sheet-right">Respuesta correcta: <b>${fmt(right.t)}</b></p>` : ""}
       ${fb.extra ? `<p class="sheet-why">${fb.extra}</p>` : ""}
       ${why ? `<p class="sheet-why">${fmt(why)}</p>` : ""}
+      ${t.fix ? `<div class="sheet-fix"><small>Así se corrige</small><code>${hl(t.fix)}</code></div>` : ""}
       <div class="chips">${lines.join("")}</div>
       <button class="btn primary wide" id="p-next">${last ? "Cerrar el turno" : "Siguiente ticket"}</button>
     </div>`;
@@ -311,6 +340,7 @@
     if (stars >= 2) prog.good += 1;
     const examReady = prog.good >= TA.GOOD_FOR_STAMP && !S.stamps[city.code];
     TA.touchStreak();
+    PROG.shift({ stars, health: cur.health, perfect: n > 0 && good === n, camaCaught: cur.res.filter((r) => r.cama === "caught").length, shieldUsed: TA.has("llave") && !cur.shield });
     const after = TA.rankInfo(S.xp);
     const res = cur.res;
     S.cur = null;
@@ -359,10 +389,10 @@
     return c ? `<div class="from">${ART.portrait(t.who, "neutral", "sm")}<div><b>${esc(c.name)}</b><small>${esc(c.role)}</small></div></div>` : "";
   }
 
-  function options(root, opts, onPick) {
+  function options(root, opts, onPick, extraClass) {
     const cur = TA.S.cur;
     const wrap = document.createElement("div");
-    wrap.className = "opts";
+    wrap.className = "opts" + (extraClass ? " " + extraClass : "");
     wrap.innerHTML = opts.map((o, i) => `<button class="opt" data-i="${i}">${fmt(o.t)}</button>`).join("");
     root.appendChild(wrap);
     const btns = [...wrap.children];
@@ -386,7 +416,90 @@
     }
   }
 
+  /* Resaltado sencillo: textos entre comillas, comentarios y palabras clave. */
+  const KW = /^(def|return|import|from|if|public|void|new|const|let|String|Long|Statement|ResultSet|PreparedStatement|and|or|not|True|False|None|Allow)$/;
+  function hl(line) {
+    const re = /("(?:[^"\\]|\\.)*"|'(?:[^'\\]|\\.)*')|(#.*$|\/\/.*$)|(@?\b[A-Za-z_]+\b)/g;
+    let out = "", last = 0, m;
+    while ((m = re.exec(line))) {
+      out += esc(line.slice(last, m.index));
+      if (m[1]) out += `<span class="hl-s">${esc(m[1])}</span>`;
+      else if (m[2]) out += `<span class="hl-c">${esc(m[2])}</span>`;
+      else if (KW.test(m[3]) || m[3][0] === "@") out += `<span class="hl-k">${esc(m[3])}</span>`;
+      else out += esc(m[3]);
+      last = re.lastIndex;
+    }
+    return out + esc(line.slice(last));
+  }
+  const sevOf = (v) => (v >= 9 ? ["crit", "Crítica"] : v >= 7 ? ["high", "Alta"] : v >= 4 ? ["med", "Media"] : ["low", "Baja"]);
+
   const RENDER = {
+    code(root, t, done) {
+      root.innerHTML = `<article class="ticket">
+        <p class="t-label">Revisión de código · ${esc(t.lang)}${t.review ? ' <span class="tag">repaso</span>' : ""}</p>
+        <h3 class="t-q">${esc(t.title)}</h3>
+        <p class="small">Toca la línea vulnerable.</p>
+      </article>
+      <div class="code" role="list">${t.lines.map((l, i) => `<button class="code-line mono" role="listitem" data-i="${i}" ${l.trim() ? "" : "disabled"}><span class="ln">${i + 1}</span><span class="cl">${hl(l) || "&nbsp;"}</span></button>`).join("")}</div>`;
+      const btns = [...root.querySelectorAll(".code-line")];
+      btns.forEach((b) => b.onclick = () => {
+        btns.forEach((x) => x.disabled = true);
+        btns[t.bad].classList.add("right");
+        const i = +b.dataset.i;
+        if (i !== t.bad) b.classList.add("wrong");
+        done(i === t.bad);
+      });
+    },
+
+    header(root, t, done) {
+      root.innerHTML = `<article class="ticket">
+        <p class="t-label">Encabezados de correo${t.review ? ' <span class="tag">repaso</span>' : ""}</p>
+        <h3 class="t-q">¿Este correo es legítimo o está suplantado?</h3>
+        <p class="small">Revisa el dominio del From, el Return-Path y los resultados de SPF, DKIM y DMARC.</p>
+      </article>
+      <div class="hdrs mono">${t.lines.map((l, i) => `<p data-i="${i}">${esc(l)}</p>`).join("")}</div>
+      <div class="duo">
+        <button class="btn big" id="h-legit">Legítimo</button>
+        <button class="btn big danger" id="h-fake">Suplantado</button>
+      </div>`;
+      const decide = (saysLegit) => {
+        $("#h-legit").disabled = $("#h-fake").disabled = true;
+        root.querySelectorAll(".hdrs p").forEach((p) => { if (t.clue.includes(+p.dataset.i)) p.classList.add("clue"); });
+        done(saysLegit === t.legit, t.legit ? "Era <b>legítimo</b>. Las líneas marcadas lo confirman." : "Estaba <b>suplantado</b>. Las líneas marcadas lo delatan.");
+      };
+      $("#h-legit").onclick = () => decide(true);
+      $("#h-fake").onclick = () => decide(false);
+    },
+
+    siem(root, t, done) {
+      root.innerHTML = `<article class="ticket">
+        <p class="t-label">Consulta al SIEM · ${esc(t.lang)}${t.review ? ' <span class="tag">repaso</span>' : ""}</p>
+        <h3 class="t-q">${esc(t.q)}</h3>
+      </article>`;
+      options(root, t.opts, done, "code-opts");
+    },
+
+    cve(root, t, done) {
+      root.innerHTML = `<article class="ticket">
+        <p class="t-label">Gestión de vulnerabilidades${t.review ? ' <span class="tag">repaso</span>' : ""}</p>
+        <h3 class="t-q">Solo hay tiempo para un parche esta noche. ¿Cuál va primero?</h3>
+        <p class="small">Pesa el CVSS, pero también si está en internet y si ya se explota (catálogo KEV de CISA).</p>
+      </article>
+      <div class="cves">${t.items.map((x, i) => { const [sc, sl] = sevOf(x.cvss); return `<button class="cve" data-i="${i}">
+        <span class="cve-top"><span class="mono">${esc(x.id)}</span><span class="sev sev-${sc}">CVSS ${x.cvss.toFixed(1)} · ${sl}</span></span>
+        <b>${esc(x.name)}</b>
+        <span class="small">${esc(x.asset)}</span>
+        <span class="cve-tags"><span class="st ${x.exp === "Internet" ? "exam" : x.exp === "Aislado" ? "shut" : "open"}">${esc(x.exp)}</span>${x.kev ? '<span class="st exam">Explotada (KEV)</span>' : '<span class="st shut">Sin explotación conocida</span>'}</span>
+      </button>`; }).join("")}</div>`;
+      const btns = [...root.querySelectorAll(".cve")];
+      btns.forEach((b) => b.onclick = () => {
+        btns.forEach((x, i) => { x.disabled = true; if (t.items[i].ok) x.classList.add("right"); });
+        const i = +b.dataset.i;
+        if (!t.items[i].ok) b.classList.add("wrong");
+        done(t.items[i].ok);
+      });
+    },
+
     quiz(root, t, done) {
       root.innerHTML = `<article class="ticket">
         <p class="t-label">${esc(t.label)}${t.review ? ' <span class="tag">repaso</span>' : ""}</p>
@@ -571,6 +684,7 @@
         if (done) return;
         const o = opts[+b.dataset.i];
         [...wrap.children].forEach((x, i) => { x.disabled = true; if (opts[i].ok) x.classList.add("right"); });
+        PROG.ticket({ type: "quiz", id }, o.ok, false, null);
         if (o.ok) { right += 1; TA.markResult(id, true); }
         else { b.classList.add("wrong"); misses.push({ q, id }); TA.markResult(id, false); }
         S.seen[id] = 1;
@@ -584,6 +698,7 @@
       S.xp += xp; S.answered += k; S.correct += right;
       const record = right > S.flashBest; if (record) S.flashBest = right;
       TA.save();
+      PROG.flash({ right });
       el.innerHTML = `<div class="result">
         <p class="eyebrow mono">REPASO RELÁMPAGO</p>
         <h2>${right} ${right === 1 ? "acierto" : "aciertos"} en 60 segundos</h2>
@@ -647,6 +762,7 @@
     btns.forEach((b) => b.onclick = () => {
       const i = +b.dataset.i, ok = opts[i].ok;
       if (ok) ex.right += 1; else ex.misses.push(id);
+      PROG.ticket({ type: "quiz", id }, ok, false, null);
       TA.markResult(id, ok); S.seen[id] = 1; S.answered += 1; if (ok) S.correct += 1;
       ex.last = { k: ex.i, picked: i }; ex.i += 1;
       TA.save();
@@ -670,6 +786,7 @@
     const misses = ex.misses.map((id) => TA.quizById(id)).filter(Boolean);
     S.exam = null;
     TA.save();
+    PROG.exam({ city: city.code, pass, right: ex.right });
     play().innerHTML = `<div class="result">
       <p class="eyebrow mono">EXAMEN DE SEDE · ${city.code}</p>
       <h2>${ex.right} de ${ex.ids.length}${pass ? " · Aprobado" : ""}</h2>
