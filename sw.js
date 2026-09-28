@@ -1,6 +1,6 @@
 /* Turno Andino — service worker: guarda el juego en el teléfono para jugar sin internet.
    Al cambiar cualquier archivo, sube VERSION para que el teléfono descargue la versión nueva. */
-const VERSION = "ta-v4";
+const VERSION = "ta-v5";
 const FILES = [
   "./", "index.html", "style.css", "manifest.webmanifest",
   "data/glossary.js", "data/glossary-plus-a.js", "data/glossary-plus-b.js", "data/modules-a.js", "data/modules-b.js", "data/modules-c.js", "data/objchecks.js", "data/extras.js", "data/distractors.js", "data/questions-extra.js",

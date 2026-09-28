@@ -424,6 +424,12 @@
     /* En localhost solo se activa con #sw, para que los cambios se vean al recargar mientras se desarrolla. */
     const dev = /^(localhost|127\.0\.0\.1)$/.test(location.hostname) && location.hash !== "#sw";
     if ("serviceWorker" in navigator && /^https?:$/.test(location.protocol) && !dev) {
+      /* Si llega una versión nueva del juego, se recarga una vez para mostrarla (el progreso ya está guardado). */
+      const hadController = !!navigator.serviceWorker.controller;
+      let reloaded = false;
+      navigator.serviceWorker.addEventListener("controllerchange", () => {
+        if (hadController && !reloaded) { reloaded = true; location.reload(); }
+      });
       navigator.serviceWorker.register("sw.js").catch(() => {});
     }
     try { navigator.storage && navigator.storage.persist && navigator.storage.persist(); } catch (e) {}
