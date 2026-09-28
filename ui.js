@@ -37,6 +37,7 @@
         <h1>${esc(r.name)}</h1>
         <div class="bar" role="meter" aria-label="Progreso al siguiente cargo" aria-valuenow="${Math.round(r.pct * 100)}" aria-valuemin="0" aria-valuemax="100"><i style="width:${r.pct * 100}%"></i></div>
         <p class="small mono">${S.xp.toLocaleString("es-CO")} REP · ${S.shifts} ${S.shifts === 1 ? "TURNO" : "TURNOS"}</p>
+        ${careerLine()}
       </section>
 
       ${pending ? `<section class="resume">
@@ -97,6 +98,18 @@
         <p><small>El Camaleón</small>Lo has atrapado ${S.cama.caught} ${S.cama.caught === 1 ? "vez" : "veces"}.
         ${nextDossier ? "Atrápalo " + (nextDossier[0] - S.cama.caught) + " más para abrir la siguiente página de su expediente." : "Su expediente está completo."}</p>
       </section>`;
+  }
+
+  function careerLine() {
+    const c = CAREER.current();
+    if (c) {
+      const x = CAREER.info(c.id);
+      return `<button class="car-line" id="h-career" style="--h:${c.hue}"><span class="car-dot" aria-hidden="true"></span>
+        <span><b>${esc(c.name)}</b> · ${esc(x.title)}<small>${x.next ? "Faltan " + x.need + " de experiencia para " + esc(x.next) : "Llegaste al último cargo"}</small></span>
+        <span class="bar sm"><i style="width:${x.pct * 100}%"></i></span></button>`;
+    }
+    if (CAREER.unlocked()) return `<button class="btn primary wide" id="h-pick">Elige tu especialidad</button>`;
+    return `<p class="small">Al llegar a Analista SOC N2 eliges especialidad: SOC, forense, pentesting, AppSec, fraude, nube o cumplimiento.</p>`;
   }
 
   function missionsCard() {
@@ -204,8 +217,25 @@
             ${a.got ? `<span class="small mono">${a.got}</span>` : hidden ? "" : `<div class="bar sm"><i style="width:${(a.cur / a.goal) * 100}%"></i></div><span class="small mono">${a.cur}/${a.goal}</span>`}</div>
           </li>`; }).join("")}</ul></section>`).join("")}`;
     } else if (passTab === "carrera") {
-      const ladder = CAREER.map((c, i) => `<li class="${i < ri ? "past" : i === ri ? "now" : ""}"><span class="mono">${c[0].toLocaleString("es-CO")}</span><b>${esc(c[1])}</b><small>${TA.money(c[2])}/turno</small></li>`).join("");
-      body = `<ol class="ladder">${ladder}</ol>`;
+      const cur = window.CAREER && CAREER.current();
+      let spec = "";
+      if (cur) {
+        const x = CAREER.info(cur.id);
+        spec = `<section class="spec" style="--h:${cur.hue}">
+          <p class="eyebrow">Tu especialidad</p><h2>${esc(cur.name)}</h2>
+          <p class="small">${esc(cur.day)}</p>
+          <ol class="ladder">${cur.levels.map((l, i) => `<li class="${i < x.l ? "past" : i === x.l ? "now" : ""}"><span class="mono">${CAREER_LEVELS[i]}</span><b>${esc(l)}</b><small>${i === x.l ? x.xp + " exp." : ""}</small></li>`).join("")}</ol>
+          <p class="small"><b>Certificaciones reales de referencia:</b> ${cur.certs.map((c) => esc(c[0]) + " (" + esc(c[1]) + ")").join(" · ")}</p>
+          <button class="btn wide" id="pp-switch">Ver otras especialidades</button>
+        </section>`;
+      } else if (CAREER.unlocked()) {
+        spec = `<button class="btn primary wide" id="pp-switch">Elige tu especialidad</button>`;
+      } else {
+        spec = `<p class="small">Las especialidades se desbloquean al llegar a Analista SOC N2. Estas son las opciones:</p>
+          <ul class="car-preview">${CAREERS.map((c) => `<li style="--h:${c.hue}"><span class="car-dot" aria-hidden="true"></span><div><b>${esc(c.name)}</b><small>${esc(c.pitch)}</small></div></li>`).join("")}</ul>`;
+      }
+      const ladder = window.CAREER_RANKS.map((c, i) => `<li class="${i < ri ? "past" : i === ri ? "now" : ""}"><span class="mono">${c[0].toLocaleString("es-CO")}</span><b>${esc(c[1])}</b><small>${TA.money(c[2])}/turno</small></li>`).join("");
+      body = `${spec}<section class="block"><h2>Cargos del banco</h2><ol class="ladder">${ladder}</ol></section>`;
     } else {
       const doss = DOSSIER.map((d) => S.cama.caught >= d[0]
         ? `<li><b>${esc(d[1])}</b><p>${esc(d[2])}</p></li>`
@@ -237,6 +267,11 @@
         <div><dt>Récord relámpago</dt><dd>${S.flashBest}</dd></div>
         <div><dt>Por repasar</dt><dd>${Object.keys(S.wrong).length}</dd></div>
       </dl>
+      <section class="block">
+        <h2>Diccionario del SOC</h2>
+        <p class="small">${GLOSS.count()} términos explicados con palabras sencillas y ejemplos del banco. En los tickets, las palabras técnicas vienen subrayadas: tócalas para ver qué significan.</p>
+        <button class="btn wide" id="pf-dict">Abrir el diccionario</button>
+      </section>
       ${securityPlus()}
       <section class="block">
         <h2>Instálalo en tu iPhone</h2>
@@ -293,6 +328,10 @@
     on("h-start", () => PLAY.start());
     on("h-resume", () => PLAY.resume());
     on("h-flash", () => PLAY.flash());
+    on("h-pick", () => CAREER.picker({ onClose: () => go(view) }));
+    on("h-career", () => { passTab = "carrera"; go("pasaporte"); });
+    on("pp-switch", () => CAREER.picker({ onClose: () => go(view) }));
+    on("pf-dict", () => GLOSS.dictionary());
     document.querySelectorAll(".claim").forEach((b) => b.onclick = () => {
       const r = PROG.claim(b.dataset.id);
       if (r) PROG.toast({ kind: "mission", title: "Cobraste la misión", text: "+" + TA.money(r.money) + " · +" + r.xp + " rep.", sub: r.bonus ? "Incluye el bono del día" : "" });
@@ -380,6 +419,7 @@
     PROG.ensureMissions();
     go(tab);
     PROG.check();
+    if (TA.S.intro) CAREER.ensureOffer();
     if (!TA.S.intro) intro();
     /* En localhost solo se activa con #sw, para que los cambios se vean al recargar mientras se desarrolla. */
     const dev = /^(localhost|127\.0\.0\.1)$/.test(location.hostname) && location.hash !== "#sw";

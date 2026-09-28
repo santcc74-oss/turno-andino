@@ -32,7 +32,7 @@ window.CITIES = [
 ];
 
 /* Cargos: [reputación mínima, nombre, salario base por turno] */
-window.CAREER = [
+window.CAREER_RANKS = [
   [0, "Practicante", 40],
   [400, "Analista SOC N1", 60],
   [1000, "Analista SOC N2", 85],

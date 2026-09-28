@@ -12,6 +12,7 @@
     streak: { cur: 0, best: 0, last: "", freezeWeek: -1 },
     flashBest: 0, cur: null, exam: null, mapSeen: 1,
     st: {}, dom: {}, ach: {}, daily: null, weekly: null,
+    seenN: {}, career: null, careers: {}, careerOffered: false,
   });
 
   function merge(raw) {
@@ -20,6 +21,8 @@
     for (const k of Object.keys(base)) if (raw[k] !== undefined) base[k] = raw[k];
     base.cama = Object.assign(fresh().cama, raw.cama || {});
     base.streak = Object.assign(fresh().streak, raw.streak || {});
+    /* Versiones anteriores solo marcaban las preguntas vistas; se cuentan como vistas una vez. */
+    if (raw.seen && !raw.seenN) Object.keys(raw.seen).forEach((id) => { base.seenN[id] = 1; });
     return base;
   }
 
@@ -52,11 +55,11 @@
   /* ——— Carrera ——— */
   function rankIndex(xp) {
     let r = 0;
-    CAREER.forEach((c, i) => { if (xp >= c[0]) r = i; });
+    CAREER_RANKS.forEach((c, i) => { if (xp >= c[0]) r = i; });
     return r;
   }
   function rankInfo(xp) {
-    const i = rankIndex(xp), cur = CAREER[i], next = CAREER[i + 1];
+    const i = rankIndex(xp), cur = CAREER_RANKS[i], next = CAREER_RANKS[i + 1];
     const pct = next ? (xp - cur[0]) / (next[0] - cur[0]) : 1;
     return { i, name: cur[1], salary: cur[2], next: next ? next[1] : null, need: next ? next[0] - xp : 0, pct: Math.max(0, Math.min(1, pct)) };
   }
@@ -86,6 +89,8 @@
     if ((m = /^x-(\d+)$/.exec(id))) return EXTRA_Q[+m[1]];
     if ((m = /^(m\w+)-q(\d+)$/.exec(id))) { const mod = modById(m[1]); return mod && Array.isArray(mod.quiz) ? mod.quiz[+m[2]] : null; }
     if ((m = /^(m\w+)-o(\d+)$/.exec(id))) { const arr = OBJCHECKS[m[1]]; return arr ? arr[+m[2]] : null; }
+    if ((m = /^e-(m\w+)-(\d+)$/.exec(id))) { const arr = (window.EXTRA_CITY || {})[m[1]]; return arr ? arr[+m[2]] : null; }
+    if ((m = /^cq-(\w+)-(\d+)$/.exec(id))) { const c = (window.CAREERS || []).find((x) => x.id === m[1]); return c ? c.q[+m[2]] : null; }
     return null;
   }
   function quizIdsFor(city) {
@@ -94,6 +99,7 @@
       const mod = modById(mid);
       if (mod && Array.isArray(mod.quiz)) mod.quiz.forEach((_, i) => ids.push(mid + "-q" + i));
       (OBJCHECKS[mid] || []).forEach((_, i) => ids.push(mid + "-o" + i));
+      ((window.EXTRA_CITY || {})[mid] || []).forEach((_, i) => ids.push("e-" + mid + "-" + i));
     });
     if (city.code === "MAD") EXTRA_Q.forEach((_, i) => ids.push("x-" + i));
     return ids;
@@ -114,6 +120,48 @@
     city.mods.forEach((mid) => { const mod = modById(mid); if (mod && mod.english) words = words.concat(mod.english.words); });
     if (words.length < 4) MODULES.forEach((mod) => { if (mod.english) words = words.concat(mod.english.words); });
     return words;
+  }
+
+  /* ——— Conceptos: preguntas casi iguales (misma idea con otras palabras) cuentan como una sola ———
+     Se agrupan las del mismo módulo que comparten la mayoría de sus palabras clave. */
+  const conceptOf = {};
+  (function buildConcepts() {
+    const STOP = new Set("para porque sirve cual cuál como cómo esta este esto una unos unas los las del que qué con por sus suele debe sobre entre desde".split(" "));
+    const words = (t) => new Set(t.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9 ]/g, " ").split(/\s+/).filter((w) => w.length > 3 && !STOP.has(w)));
+    const items = [];
+    MODULES.forEach((m) => {
+      const add = (id) => { const q = quizById(id); if (q && Array.isArray(q.a)) items.push({ id, mod: m.id, w: words(q.q + " " + q.a[q.c]) }); };
+      if (Array.isArray(m.quiz)) m.quiz.forEach((_, i) => add(m.id + "-q" + i));
+      (OBJCHECKS[m.id] || []).forEach((_, i) => add(m.id + "-o" + i));
+      ((window.EXTRA_CITY || {})[m.id] || []).forEach((_, i) => add("e-" + m.id + "-" + i));
+    });
+    const root = (id) => { while (conceptOf[id] && conceptOf[id] !== id) id = conceptOf[id]; return id; };
+    items.forEach((x) => { conceptOf[x.id] = x.id; });
+    for (let i = 0; i < items.length; i++) for (let j = i + 1; j < items.length; j++) {
+      const a = items[i], b = items[j];
+      if (a.mod !== b.mod) continue;
+      let n = 0; a.w.forEach((w) => { if (b.w.has(w)) n++; });
+      if (n / (a.w.size + b.w.size - n || 1) >= 0.34) conceptOf[root(b.id)] = root(a.id);
+    }
+    items.forEach((x) => { conceptOf[x.id] = root(x.id); });
+  })();
+  const concept = (id) => conceptOf[id] || id;
+  const seenCount = (id) => (S.seenN || {})[concept(id)] || 0;
+  function markSeen(id) {
+    if (!id) return;
+    if (!S.seenN) S.seenN = {};
+    const c = concept(id);
+    S.seenN[c] = (S.seenN[c] || 0) + 1;
+  }
+  /* Elige entre ids evitando conceptos ya usados en el turno y prefiriendo los menos vistos. */
+  function pickFresh(ids, usedConcepts) {
+    if (!ids.length) return null;
+    const avoid = usedConcepts || new Set();
+    const cand = ids.filter((id) => !avoid.has(concept(id)));
+    const pool = cand.length ? cand : ids;
+    let min = Infinity;
+    pool.forEach((id) => { min = Math.min(min, seenCount(id)); });
+    return pick(pool.filter((id) => seenCount(id) === min));
   }
 
   /* ——— Racha ——— */
@@ -164,5 +212,6 @@
     has, hintsPerShift, slaSeconds,
     modById, quizById, quizIdsFor, msgById, msgIds, englishPairs,
     touchStreak, streakAlive, markResult, dueReview,
+    concept, seenCount, markSeen, pickFresh,
   };
 })();

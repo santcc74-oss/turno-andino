@@ -273,7 +273,7 @@
     confetti();
     ceremony(`
       <p class="eyebrow mono">Recursos Humanos · Banco Andino</p>
-      <div class="promo-badge" aria-hidden="true"><small>NIVEL</small><span>${rank.i + 1}</span><small>DE ${CAREER.length}</small></div>
+      <div class="promo-badge" aria-hidden="true"><small>NIVEL</small><span>${rank.i + 1}</span><small>DE ${CAREER_RANKS.length}</small></div>
       <h2>Ascenso: ${rank.name}</h2>
       <div class="quote">${portrait("marta", "happy")}<p>«Te lo ganaste. Desde hoy cobras ${TA.money(rank.salary)} por turno.»<small>Marta Quintero</small></p></div>`,
       [["ok", "¡Gracias, Marta!"]], onClose);

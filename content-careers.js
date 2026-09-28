@@ -1,0 +1,200 @@
+/* Turno Andino — carreras de ciberseguridad (se eligen al llegar a Analista SOC N2).
+   Cada carrera: cargos propios, certificaciones reales de referencia, minijuegos afines y un banco de casos.
+   special = minijuegos que aparecen como «caso de especialidad» ({ type, tag }). d = dominio de Security+. */
+window.CAREER_LEVELS = [0, 250, 700, 1500];
+
+window.CAREERS = [
+  { id: "soc", short: "SOC", name: "Blue Team / SOC", hue: 190,
+    pitch: "Detectas ataques mientras ocurren: alertas del SIEM, reglas de detección y cacería de amenazas.",
+    day: "Revisas la cola de alertas, descartas falsos positivos, investigas lo sospechoso y escalas lo real. Con el tiempo escribes tus propias reglas.",
+    levels: ["Analista SOC", "Ingeniero de detección", "Cazador de amenazas", "Líder del SOC"],
+    certs: [["BTL1", "Security Blue Team"], ["CySA+", "CompTIA"]],
+    special: [{ type: "siem" }, { type: "log" }, { type: "header" }],
+    q: [
+      { d: 4, q: "Una regla de fuerza bruta genera 300 alertas al día, casi todas del escáner de vulnerabilidades autorizado. ¿Qué haces?", a: ["Excluyo la IP del escáner en la regla y lo documento", "Apago la regla para que el equipo no se sature", "Subo el umbral a 10.000 fallos por minuto", "Cierro todas las alertas en lote cada mañana"], c: 0, w: "Se ajusta la regla con una excepción puntual y documentada. Apagarla o subir tanto el umbral deja ciego al SOC." },
+      { d: 4, q: "¿Qué es un IOC?", a: ["Un informe mensual que el SOC entrega a la gerencia", "Un rastro técnico de un ataque, como una IP, un dominio o un hash", "Un tipo de firewall que filtra correos maliciosos", "Una certificación internacional para analistas"], c: 1, w: "Los indicadores de compromiso se comparten y se cargan en el SIEM para detectar al mismo atacante en otros lugares." },
+      { d: 4, q: "Una alerta muestra a un usuario iniciando sesión desde Bogotá y cinco minutos después desde otro continente. ¿Qué haces primero?", a: ["Bloqueo la cuenta para siempre sin revisar nada más", "La ignoro: los viajes imposibles siempre son falsos", "Reviso si hay VPN o proxy y valido con el usuario por otro canal", "Reinicio el servidor de autenticación del banco"], c: 2, w: "Primero contexto: una VPN corporativa puede explicarlo. Si no hay explicación, se revocan las sesiones y se cambia la clave." },
+      { d: 4, q: "¿Qué diferencia a un EDR de un antivirus tradicional?", a: ["Solo compara archivos contra una lista de firmas de virus conocidos", "Funciona únicamente en los servidores Linux del centro de datos", "Bloquea los correos de phishing antes de que lleguen al buzón", "Registra el comportamiento del equipo y permite investigar y aislar"], c: 3, w: "El EDR guarda la historia de procesos y conexiones, y deja aislar un equipo a distancia." },
+      { d: 4, q: "En la cola del SOC, ¿qué atiendes primero?", a: ["Ransomware cifrando ahora un servidor de pagos", "Un usuario que olvidó su contraseña otra vez", "Un escaneo de puertos que el firewall ya bloqueó", "Un spam que ya llegó a la carpeta de basura"], c: 0, w: "Triaje: lo activo y de mayor impacto primero. Lo que ya fue bloqueado puede esperar." },
+      { d: 4, q: "¿Qué es un playbook en un SOC?", a: ["El registro de los turnos de cada analista", "Una guía paso a paso para responder a un tipo de alerta", "Un juego para practicar con ataques reales", "La lista de contraseñas de emergencia del equipo"], c: 1, w: "Los playbooks hacen que cualquiera del equipo responda igual de bien, incluso a las 3 a. m." },
+      { d: 4, q: "Al entregar tu turno, la nota para el siguiente analista debe incluir:", a: ["Solo la hora exacta en que terminaste", "Las contraseñas de las herramientas que usaste", "Casos abiertos, qué se hizo y qué falta revisar", "Un resumen de las noticias de seguridad del día"], c: 2, w: "Una buena entrega de turno evita que un caso abierto se pierda entre turnos." },
+      { d: 4, q: "Un «verdadero positivo» es:", a: ["Una alerta que se disparó sin que hubiera ataque", "Un ataque real que ninguna herramienta detectó", "Un evento normal que no generó ninguna alerta", "Una alerta que sí corresponde a un ataque real"], c: 3, w: "Verdadero positivo: alerta y ataque real. Falso positivo: alerta sin ataque. Falso negativo: ataque sin alerta." },
+    ] },
+
+  { id: "dfir", short: "DFIR", name: "Respuesta a incidentes y forense", hue: 12,
+    pitch: "Llegas cuando el ataque ya pasó: contienes el daño, recuperas y reconstruyes qué ocurrió.",
+    day: "Coordinas la respuesta, aíslas equipos, haces copias forenses, armas la línea de tiempo del ataque y escribes el informe.",
+    levels: ["Respondedor de incidentes", "Analista forense", "Líder de respuesta", "Jefe de DFIR"],
+    certs: [["GCIH", "GIAC"], ["GCFA", "GIAC"]],
+    special: [{ type: "order", tag: "dfir" }, { type: "log" }, { type: "siem" }],
+    q: [
+      { d: 4, q: "¿Por qué se hace una copia forense bit a bit del disco antes de analizarlo?", a: ["Para trabajar sobre la copia sin alterar la evidencia original", "Porque el disco original se borra al conectarlo al laboratorio", "Para que el análisis sea más rápido que en el disco real", "Porque la ley exige destruir el disco después del análisis"], c: 0, w: "El original se guarda intacto y se prueba con hash que la copia es idéntica." },
+      { d: 4, q: "Un bloqueador de escritura sirve para:", a: ["Impedir que el atacante siga cifrando archivos", "Leer un disco sin que el equipo del analista escriba en él", "Bloquear los puertos USB de todos los empleados", "Evitar que se escriban logs durante el incidente"], c: 1, w: "Solo conectar un disco a Windows puede modificarlo; el bloqueador lo impide." },
+      { d: 4, q: "En la línea de tiempo de un ataque de ransomware, ¿qué evento suele ir primero?", a: ["El cifrado de los servidores de archivos", "La exfiltración de la base de clientes", "El correo de phishing que abrió un empleado", "La nota de rescate en los escritorios"], c: 2, w: "Casi siempre empieza con un acceso inicial, como un phishing. El cifrado es lo último." },
+      { d: 4, q: "La contención a corto plazo consiste en:", a: ["Reconstruir todos los servidores desde cero", "Escribir el informe final para la gerencia", "Comprar nuevas herramientas de seguridad", "Frenar el daño ya: aislar equipos o bloquear cuentas"], c: 3, w: "Primero se detiene la hemorragia; la erradicación y la recuperación vienen después." },
+      { d: 5, q: "¿Qué es un ejercicio tabletop?", a: ["Un simulacro en mesa donde el equipo recorre un incidente ficticio", "Un ataque real controlado contra la red de producción", "Una auditoría obligatoria de la Superintendencia", "Un inventario de los equipos de cada oficina"], c: 0, w: "Sirve para descubrir huecos del plan sin arriesgar nada real." },
+      { d: 4, q: "La herramienta Volatility se usa para analizar:", a: ["Paquetes capturados de la red", "Volcados de memoria RAM", "Correos sospechosos reportados", "Registros de acceso físico"], c: 1, w: "En la RAM viven procesos y conexiones que nunca tocan el disco." },
+      { d: 4, q: "Tras erradicar el malware, antes de devolver el servidor a producción hay que:", a: ["Encenderlo de inmediato para no afectar a los clientes", "Borrar sus logs para liberar espacio en el disco", "Restaurarlo desde un respaldo limpio y vigilarlo de cerca", "Cambiarle el nombre para que el atacante no lo encuentre"], c: 2, w: "Se restaura de una fuente confiable y se monitorea por si el atacante dejó otra puerta." },
+      { d: 4, q: "La reunión de lecciones aprendidas sirve para:", a: ["Encontrar al empleado culpable y sancionarlo", "Cerrar el ticket lo más rápido posible", "Borrar la evidencia una vez resuelto el caso", "Mejorar controles y procesos para que no se repita"], c: 3, w: "Es una reunión sin culpables: el objetivo es aprender, no castigar." },
+    ] },
+
+  { id: "pentest", short: "Pentest", name: "Pentesting ético", hue: 350,
+    pitch: "Piensas como atacante, con permiso: encuentras las fallas antes que los delincuentes y explicas cómo cerrarlas.",
+    day: "Acuerdas el alcance, pruebas sistemas autorizados, compruebas qué tan grave es cada falla y escribes un informe claro para el cliente.",
+    levels: ["Pentester junior", "Pentester", "Líder de red team", "Director de seguridad ofensiva"],
+    certs: [["eJPT", "INE"], ["OSCP", "OffSec"]],
+    special: [{ type: "scan" }, { type: "cve" }, { type: "code" }],
+    q: [
+      { d: 5, q: "El alcance (scope) de un pentest define:", a: ["Qué sistemas se pueden probar y cuáles no", "Cuánto cobra el pentester por cada hallazgo", "Qué herramientas tiene prohibidas el cliente", "Cuántos empleados trabajan en la empresa"], c: 0, w: "Probar algo fuera del alcance es un delito, aunque exista un contrato." },
+      { d: 5, q: "Durante una prueba autorizada encuentras datos reales de clientes. ¿Qué haces?", a: ["Copio una muestra para demostrar el hallazgo", "Sigo explorando: está dentro del alcance", "Publico el hallazgo para presionar al cliente", "Paro, no descargo nada y aviso al contacto del cliente"], c: 3, w: "La evidencia se documenta sin extraer datos personales, y el cliente se entera de inmediato." },
+      { d: 2, q: "OSINT es:", a: ["Un escáner de vulnerabilidades de código abierto muy popular", "Información obtenida de fuentes públicas, como redes y registros", "Un sistema operativo diseñado especialmente para pentesting", "Una técnica para descifrar contraseñas probando combinaciones"], c: 1, w: "Ofertas de empleo, redes sociales y registros de dominios revelan mucho de una empresa." },
+      { d: 5, q: "En una prueba de caja gris, el evaluador:", a: ["No sabe absolutamente nada del sistema", "Tiene acceso total al código y la arquitectura", "Tiene información parcial, como una cuenta normal", "Solo revisa documentos sin tocar los sistemas"], c: 2, w: "Negra: sin información. Gris: algo, como un usuario de prueba. Blanca: todo, incluido el código." },
+      { d: 5, q: "En el informe, un hallazgo bien escrito incluye:", a: ["Evidencia, impacto, severidad y cómo corregirlo", "Solo el nombre de la herramienta que lo encontró", "La lista de todos los comandos que ejecutaste", "El nombre del desarrollador que cometió el error"], c: 0, w: "El cliente necesita entender el riesgo y saber exactamente qué hacer." },
+      { d: 2, q: "El puerto 3389 (RDP) abierto a internet en un servidor del banco es:", a: ["Normal: RDP está hecho para usarse desde internet", "Irrelevante si el servidor tiene antivirus", "Un hallazgo de riesgo alto que expone el acceso remoto", "Un falso positivo típico de los escáneres"], c: 2, w: "RDP expuesto es una de las entradas favoritas del ransomware. Va detrás de una VPN con MFA." },
+      { d: 4, q: "Un escaneo de vulnerabilidades se diferencia de un pentest en que el pentest:", a: ["Es automático y corre todos los días sin intervención", "Solo revisa si el antivirus está actualizado", "No necesita autorización porque no cambia nada", "Comprueba a mano si la falla se puede aprovechar y su impacto"], c: 3, w: "El escáner lista posibles fallas; el pentester confirma cuáles son reales y qué permiten." },
+      { d: 4, q: "Después de entregar el informe, el retest sirve para:", a: ["Cobrar otra vez al cliente por los mismos hallazgos", "Verificar que las fallas reportadas quedaron corregidas", "Buscar fallas nuevas fuera del alcance que se acordó", "Borrar la evidencia que quedó del primer informe"], c: 1, w: "Cierra el ciclo: sin retest nadie sabe si la corrección funcionó." },
+    ] },
+
+  { id: "appsec", short: "AppSec", name: "AppSec / DevSecOps", hue: 265,
+    pitch: "Haces que el software del banco nazca seguro: revisas código, dependencias y el proceso de publicación.",
+    day: "Revisas cambios de código, configuras escáneres automáticos, ayudas a los desarrolladores a corregir y diseñas con ellos las defensas.",
+    levels: ["Desarrollador seguro", "Ingeniero AppSec", "Arquitecto de software seguro", "Líder de DevSecOps"],
+    certs: [["GWAPT", "GIAC"], ["CSSLP", "ISC2"]],
+    special: [{ type: "code" }, { type: "code" }, { type: "cve" }],
+    q: [
+      { d: 4, q: "Una herramienta SAST analiza:", a: ["El código fuente sin ejecutar la aplicación", "La aplicación mientras corre, enviando peticiones", "Solo las librerías de terceros del proyecto", "El tráfico de red entre usuarios y servidor"], c: 0, w: "SAST lee el código; DAST prueba la aplicación en ejecución." },
+      { d: 4, q: "Una herramienta DAST analiza:", a: ["El código fuente línea por línea antes de compilar", "Los permisos de los desarrolladores en GitHub", "La aplicación en ejecución, como lo haría un atacante", "Las copias de seguridad de la base de datos"], c: 2, w: "DAST no ve el código: envía peticiones y observa las respuestas." },
+      { d: 2, q: "El análisis de composición de software busca:", a: ["Errores de ortografía en los mensajes de la app", "Contraseñas débiles de los usuarios finales", "Servidores sin parches en el centro de datos", "Librerías de terceros con vulnerabilidades conocidas"], c: 3, w: "La mayor parte del código de una app son librerías ajenas, como Log4j." },
+      { d: 4, q: "«Shift left» en DevSecOps significa:", a: ["Pasar la seguridad al final, antes de publicar", "Revisar la seguridad desde el inicio del desarrollo", "Mover los servidores a otro proveedor de nube", "Dejar la seguridad solo al equipo de redes"], c: 1, w: "Corregir en el diseño o al programar cuesta mucho menos que en producción." },
+      { d: 4, q: "Una llave de API quedó en un commit público de GitHub. ¿Qué es lo más importante?", a: ["Borrar el commit y esperar que nadie la haya visto", "Cambiar el nombre del repositorio en GitHub", "Revocar y rotar la llave de inmediato", "Hacer el repositorio privado y no decir nada"], c: 2, w: "Hay bots que buscan llaves en GitHub en minutos. Lo único seguro es invalidarla." },
+      { d: 1, q: "El modelado de amenazas se hace:", a: ["Al diseñar, para anticipar cómo podrían atacar la aplicación", "Después de un incidente, para buscar al culpable", "Solo cuando un auditor externo lo exige", "Al final, cuando la app ya está en producción"], c: 0, w: "Pensar como atacante sobre el diagrama evita fallas de diseño que luego son caras." },
+      { d: 3, q: "Una política CSP (Content Security Policy) ayuda sobre todo contra:", a: ["La inyección SQL en las consultas del servidor", "Los ataques de fuerza bruta contra el login", "El robo físico de los portátiles del equipo", "El XSS, porque limita de dónde se cargan scripts"], c: 3, w: "Aunque se cuele un script, el navegador no lo ejecuta si su origen no está permitido." },
+      { d: 2, q: "Validar los datos en el servidor, y no solo en el navegador, es necesario porque:", a: ["El navegador no sabe validar textos que tienen tildes o eñes", "El atacante puede saltarse el navegador y enviar la petición directo", "La validación en el navegador le cuesta más dinero a la empresa", "Los navegadores de los celulares no pueden ejecutar JavaScript"], c: 1, w: "Todo lo que llega del cliente se puede manipular; el servidor nunca debe confiar en él." },
+    ] },
+
+  { id: "fraude", short: "Fraude", name: "Seguridad bancaria y fraude", hue: 38,
+    pitch: "Proteges el dinero de los clientes: detectas fraudes, cuentas mula y estafas antes de que el dinero desaparezca.",
+    day: "Vigilas transacciones en tiempo real, atiendes casos de clientes estafados, reportas operaciones sospechosas y cuidas los datos de tarjetas.",
+    levels: ["Analista de fraude", "Especialista en prevención", "Investigador financiero", "Jefe de prevención de fraude"],
+    certs: [["PCIP", "PCI Security Standards Council"], ["CFE", "ACFE"]],
+    special: [{ type: "call" }, { type: "log", tag: "PTY" }, { type: "header" }],
+    q: [
+      { d: 2, q: "Una cuenta abierta hace tres días recibe 20 transferencias pequeñas de desconocidos y las retira en efectivo el mismo día. Parece:", a: ["Una cuenta mula usada para mover dinero robado", "Un cliente normal que vende por internet", "Un error del sistema de transferencias", "Una cuenta de ahorro programado"], c: 0, w: "Cuenta nueva, muchos remitentes y retiro inmediato: patrón clásico de mula." },
+      { d: 4, q: "La autenticación reforzada del cliente pide:", a: ["La misma contraseña escrita dos veces seguidas", "Dos factores distintos, como el celular y una huella", "El número completo de la tarjeta por teléfono", "Una foto del documento en cada compra pequeña"], c: 1, w: "Dos factores de tipos distintos: algo que sabes, que tienes o que eres." },
+      { d: 3, q: "El 3-D Secure en compras por internet sirve para:", a: ["Acelerar el envío de los productos comprados", "Dar un descuento en compras internacionales", "Verificar que quien compra es el titular de la tarjeta", "Cifrar el disco del computador del comercio"], c: 2, w: "El banco confirma la compra con el titular, por ejemplo en su app." },
+      { d: 5, q: "KYC (conoce a tu cliente) consiste en:", a: ["Enviar publicidad personalizada a cada cliente del banco", "Guardar las contraseñas de los clientes en un lugar seguro", "Llamar al cliente cada mes para saludarlo y ofrecerle productos", "Verificar la identidad y el perfil del cliente al vincularlo"], c: 3, w: "Saber quién es y a qué se dedica permite notar cuando sus movimientos no cuadran." },
+      { d: 5, q: "En Colombia, un reporte de operación sospechosa se envía a:", a: ["La UIAF (Unidad de Información y Análisis Financiero)", "La DIAN, para que cobre impuestos al cliente", "Un periódico, para advertir a otros clientes", "El mismo cliente, para que explique la operación"], c: 0, w: "El reporte es confidencial: al cliente no se le avisa que fue reportado." },
+      { d: 2, q: "El card testing se reconoce por:", a: ["Una sola compra grande en un supermercado", "Muchas compras mínimas seguidas con la misma tarjeta", "Pagos puntuales de la cuota del crédito", "Retiros en el cajero del barrio del cliente"], c: 1, w: "Prueban la tarjeta con montos pequeños antes de la compra grande." },
+      { d: 2, q: "Un cliente mayor quiere transferir todos sus ahorros a un «asesor de inversiones» que conoció por WhatsApp. Lo mejor es:", a: ["Hacer la transferencia: es su dinero y su decisión", "Bloquear su cuenta sin darle ninguna explicación", "Llamar al asesor para confirmar la inversión", "Frenar, conversar con él y explicarle las señales de estafa"], c: 3, w: "Promesas de ganancia, urgencia y un contacto por chat: señales de estafa de inversión." },
+      { d: 3, q: "Según PCI DSS, el código CVV:", a: ["No se puede guardar después de autorizar la transacción", "Debe guardarse cifrado junto al número de tarjeta", "Se puede enviar por correo si el cliente lo pide", "Debe imprimirse en el comprobante de pago"], c: 0, w: "Es un dato de autenticación sensible: se usa para autorizar y se descarta." },
+    ] },
+
+  { id: "cloud", short: "Cloud", name: "Seguridad en la nube", hue: 210,
+    pitch: "Cuidas los servicios del banco en AWS y Azure: permisos, configuraciones y registros.",
+    day: "Revisas permisos IAM, buscas buckets y puertos abiertos por error, activas registros y automatizas controles para todos los equipos.",
+    levels: ["Analista cloud", "Ingeniero de seguridad cloud", "Arquitecto cloud", "Líder de seguridad cloud"],
+    certs: [["AWS Security Specialty", "Amazon Web Services"], ["CCSK", "Cloud Security Alliance"]],
+    special: [{ type: "code", tag: "MAD" }, { type: "siem", tag: "MAD" }, { type: "cve" }],
+    q: [
+      { d: 3, q: "En el modelo de responsabilidad compartida de IaaS, el cliente responde por:", a: ["La seguridad física de los centros de datos", "Sus datos, permisos y la configuración de sus máquinas", "El hardware de los servidores del proveedor", "La red eléctrica de la región de la nube"], c: 1, w: "El proveedor cuida la infraestructura; lo que tú configuras encima es tu responsabilidad." },
+      { d: 3, q: "Un bucket S3 público que guarda extractos de clientes es:", a: ["Normal si los archivos tienen nombres difíciles", "Seguro mientras esté en otra región", "Un requisito para que la app funcione rápido", "Una fuga de datos esperando a ocurrir"], c: 3, w: "Hay herramientas que recorren internet buscando buckets abiertos." },
+      { d: 4, q: "Usar roles de IAM en lugar de llaves fijas en los servidores sirve para:", a: ["Dar credenciales temporales que rotan solas", "Que los servidores arranquen más rápido", "Evitar pagar la factura mensual de AWS", "Que todos los usuarios tengan acceso total"], c: 0, w: "Una llave fija puede filtrarse y durar años; las credenciales de un rol vencen solas." },
+      { d: 4, q: "CloudTrail te ayuda a responder:", a: ["Cuántos clientes visitaron la página web", "Qué correos llegaron a la bandeja de entrada", "Quién hizo qué cambio en la cuenta y cuándo", "Cuánto espacio libre queda en los discos"], c: 2, w: "Es la bitácora de todas las acciones sobre la cuenta de AWS." },
+      { d: 3, q: "Un grupo de seguridad que permite 0.0.0.0/0 en el puerto 22 significa que:", a: ["Solo la red interna del banco puede usar SSH", "El puerto 22 está completamente bloqueado", "SSH funciona solo para el usuario root", "Cualquier IP de internet puede intentar entrar por SSH"], c: 3, w: "0.0.0.0/0 es «todo internet». SSH se limita a la VPN o se usa un acceso administrado." },
+      { d: 3, q: "El cifrado de datos en reposo protege sobre todo contra:", a: ["El robo o la copia de discos y respaldos", "Los ataques de phishing contra empleados", "La caída del servicio por exceso de tráfico", "Los errores de programación en la aplicación"], c: 0, w: "Si alguien se lleva el disco o el respaldo, sin la llave no puede leerlo." },
+      { d: 4, q: "Un CSPM es una herramienta que:", a: ["Cifra los correos del equipo de seguridad", "Revisa la nube sin parar buscando malas configuraciones", "Reemplaza al firewall de la oficina principal", "Hace copias de seguridad de los portátiles"], c: 1, w: "La mayoría de incidentes en la nube vienen de configuraciones erróneas, no de fallas del proveedor." },
+      { d: 4, q: "¿Por qué la cuenta root de AWS debe tener MFA y usarse casi nunca?", a: ["Porque AWS cobra extra cada vez que se usa", "Porque root solo funciona desde la consola web", "Porque tiene poder total y no se puede limitar con permisos", "Porque así los reportes de costos salen más baratos"], c: 2, w: "El trabajo diario se hace con usuarios y roles de permisos mínimos." },
+    ] },
+
+  { id: "grc", short: "GRC", name: "Gobierno, riesgo y cumplimiento", hue: 150,
+    pitch: "Pones las reglas del juego: mides riesgos, preparas auditorías y alineas la seguridad con el negocio.",
+    day: "Actualizas la matriz de riesgos, pides evidencias a las áreas, acompañas auditorías de ISO 27001 y PCI DSS y explicas los riesgos a la gerencia.",
+    levels: ["Analista GRC", "Auditor de TI", "Gerente de riesgo", "Director de riesgo tecnológico"],
+    certs: [["ISO 27001 Lead Implementer", "PECB"], ["CISA", "ISACA"]],
+    special: [{ type: "risk" }, { type: "risk" }, { type: "order", tag: "MAD" }],
+    q: [
+      { d: 5, q: "El nivel de un riesgo se calcula combinando:", a: ["Probabilidad e impacto", "Precio y proveedor", "Usuarios y equipos", "Parches y antivirus"], c: 0, w: "Qué tan probable es y qué tan grave sería: así se ordena la matriz de riesgo." },
+      { d: 5, q: "Aceptar un riesgo significa:", a: ["Ignorarlo porque es muy difícil de resolver", "Decidir de forma consciente asumirlo y documentarlo", "Pasarle el problema al área de sistemas", "Comprar un seguro que cubra las pérdidas"], c: 1, w: "Aceptar es una decisión formal de alguien con autoridad. Comprar un seguro es transferir." },
+      { d: 5, q: "Una evidencia válida de que «los accesos se revisan cada trimestre» es:", a: ["Un correo del jefe diciendo que siempre se hace", "La política impresa colgada en la cartelera", "El acta firmada de la última revisión con sus hallazgos", "El compromiso verbal del equipo de TI"], c: 2, w: "El auditor necesita pruebas de que el control se ejecutó, no promesas." },
+      { d: 5, q: "La Declaración de Aplicabilidad (SoA) de ISO 27001 lista:", a: ["Los nombres de los empleados certificados", "El presupuesto anual del área de seguridad", "Las contraseñas de los sistemas críticos", "Qué controles del Anexo A se aplican y por qué"], c: 3, w: "Justifica cada control incluido o excluido del SGSI." },
+      { d: 5, q: "La política de seguridad de la información debe aprobarla:", a: ["El practicante más nuevo", "La alta dirección", "El proveedor de antivirus", "Cada usuario por separado"], c: 1, w: "Sin el respaldo de la dirección, la política no tiene fuerza ni presupuesto." },
+      { d: 5, q: "Una «no conformidad mayor» en una auditoría significa:", a: ["Un error de ortografía en la política de seguridad", "Una recomendación opcional para mejorar", "Que el auditor no pudo asistir a la reunión", "Un control requerido que no existe o falla de forma sistemática"], c: 3, w: "Puede impedir la certificación hasta que se corrija." },
+      { d: 5, q: "El riesgo de un proveedor se evalúa:", a: ["Antes de contratarlo y luego de forma periódica", "Solo cuando el proveedor ya sufrió un incidente", "Una única vez, el día que se firma el contrato", "Nunca: el riesgo es solo del proveedor"], c: 0, w: "Muchos incidentes grandes entraron por un tercero con acceso." },
+      { d: 5, q: "Un programa de concientización busca:", a: ["Que los empleados aprendan a programar en Python", "Reemplazar los controles técnicos del banco", "Que los empleados reconozcan y reporten amenazas", "Castigar a quien haga clic en un phishing"], c: 2, w: "Una cultura que reporta rápido es uno de los mejores controles." },
+    ] },
+];
+
+/* ——— Pentesting: resultados de un escaneo autorizado. Toca el hallazgo más grave. ——— */
+window.SCANS = [
+  { target: "portal.bancoandino.com.co (desde internet)", lines: [
+    "PORT     STATE SERVICE       VERSION",
+    "22/tcp   open  ssh           OpenSSH 9.6",
+    "80/tcp   open  http          nginx (redirige a 443)",
+    "443/tcp  open  https         nginx",
+    "3389/tcp open  ms-wbt-server Microsoft Terminal Services"], bad: 4,
+    why: "Escritorio remoto (RDP) expuesto a internet: es una de las entradas más usadas por el ransomware. Debe ir detrás de una VPN con MFA." },
+  { target: "archivos.aliados.bancoandino.com.co", lines: [
+    "PORT    STATE SERVICE VERSION",
+    "21/tcp  open  ftp     vsftpd 3.0.5",
+    "| ftp-anon: Anonymous FTP login allowed",
+    "22/tcp  open  ssh     OpenSSH 9.6",
+    "443/tcp open  https   Apache httpd 2.4.62"], bad: 2,
+    why: "FTP con acceso anónimo: cualquiera puede entrar sin usuario ni clave a ver (o subir) archivos. Además FTP no cifra nada." },
+  { target: "web-campanas (servidor público)", lines: [
+    "PORT     STATE SERVICE VERSION",
+    "80/tcp   open  http    nginx",
+    "443/tcp  open  https   nginx",
+    "3306/tcp open  mysql   MySQL 8.0.39"], bad: 3,
+    why: "La base de datos MySQL responde desde internet. Las bases de datos nunca deben estar expuestas: solo la aplicación debe hablar con ellas." },
+  { target: "sw-piso3 (red interna, switch)", lines: [
+    "PORT    STATE SERVICE VERSION",
+    "23/tcp  open  telnet  Cisco router telnetd",
+    "161/udp open  snmp    SNMPv3",
+    "443/tcp open  https   Cisco IOS http config"], bad: 1,
+    why: "Telnet envía el usuario y la clave del switch sin cifrar. Aunque sea interno, cualquiera en la red puede capturarlos. Se reemplaza por SSH." },
+  { target: "fs-sucursales (servidor de archivos)", lines: [
+    "PORT    STATE SERVICE      VERSION",
+    "135/tcp open  msrpc        Microsoft Windows RPC",
+    "445/tcp open  microsoft-ds Windows Server 2012 R2",
+    "| smb-protocols: dialects: NT LM 0.12 (SMBv1), 2.1, 3.0",
+    "3389/tcp closed ms-wbt-server"], bad: 3,
+    why: "SMBv1 activo en un Windows Server viejo: es la puerta que usó WannaCry con EternalBlue. Hay que apagar SMBv1 y aplicar MS17-010." },
+  { target: "pagos.bancoandino.com.co", lines: [
+    "PORT    STATE SERVICE VERSION",
+    "443/tcp open  https   nginx",
+    "| ssl-cert: Subject: commonName=pagos.bancoandino.com.co",
+    "| Not valid after:  2024-03-01T23:59:59",
+    "| tls-versions: TLSv1.2, TLSv1.3"], bad: 3,
+    why: "El certificado venció en 2024: los navegadores muestran alertas y los clientes se acostumbran a ignorarlas, justo lo que aprovecha el phishing." },
+];
+
+/* ——— GRC: matriz de riesgo 3×3. p = probabilidad, i = impacto (1 bajo · 2 medio · 3 alto). ——— */
+window.RISKS = [
+  { text: "El servidor de pagos no tiene respaldo desconectado de la red, y el ransomware ataca bancos de la región cada semana.", p: 3, i: 3,
+    why: "Muy probable (ataques activos en la región) y catastrófico (se detienen los pagos): riesgo crítico. Se trata ya: respaldo fuera de línea y probado." },
+  { text: "Un portátil de mercadeo, sin datos de clientes y con el disco cifrado, podría perderse en un taxi.", p: 2, i: 1,
+    why: "Puede pasar, pero el daño es menor: no hay datos sensibles y el disco está cifrado. Riesgo bajo." },
+  { text: "Una inundación afecta el centro de datos principal, que está en un piso 12 y lejos de cualquier río.", p: 1, i: 3,
+    why: "El impacto sería enorme, pero es muy improbable: riesgo medio. Se cubre con el sitio alterno del plan de continuidad." },
+  { text: "Los empleados reciben phishing a diario y algunos hacen clic, pero el correo tiene MFA y el EDR bloquea las macros.", p: 3, i: 2,
+    why: "Muy probable, pero los controles bajan el impacto a medio: riesgo alto. Se refuerza con concientización." },
+  { text: "La pantalla de turnos de la sala de espera usa un sistema viejo, sin conexión a la red interna.", p: 1, i: 1,
+    why: "Aislada y sin datos: poco probable y de poco impacto. Riesgo bajo; se acepta y se documenta." },
+  { text: "Un proveedor con acceso remoto al core bancario no usa MFA y ya sufrió un incidente el año pasado.", p: 2, i: 3,
+    why: "Probable (ya fue atacado) y de impacto máximo (acceso al core): riesgo alto. Se exige MFA o se corta el acceso." },
+  { text: "El sitio público de campañas tiene un XSS, pero no maneja sesiones ni datos de clientes.", p: 2, i: 2,
+    why: "Explotable y visible, con impacto limitado a la imagen: riesgo medio. Se corrige en el siguiente ciclo." },
+];
+
+/* ——— Respuesta a incidentes: procedimientos para ordenar (se suman a ORDERS). ——— */
+window.ORDERS.push(
+  { title: "Línea de tiempo de un ataque de ransomware", tags: ["dfir", "GRU"],
+    steps: ["Llega un correo con una factura adjunta", "El empleado abre el documento y habilita macros", "La macro ejecuta PowerShell y descarga el malware", "El malware crea una tarea programada para quedarse", "El atacante roba credenciales y salta a otro servidor", "Se cifran los archivos y aparece la nota de rescate"],
+    why: "Acceso inicial, ejecución, persistencia, movimiento lateral e impacto. Reconstruir este orden muestra dónde se pudo cortar el ataque." },
+  { title: "Adquisición forense de un disco", tags: ["dfir"],
+    steps: ["Fotografiar y documentar el equipo tal como está", "Conectar el disco a través de un bloqueador de escritura", "Crear la imagen forense bit a bit", "Calcular y comparar los hashes de la imagen y del original", "Analizar la copia en el laboratorio"],
+    why: "Cada paso queda en la cadena de custodia. El original nunca se toca después de copiarlo." },
+  { title: "Tácticas de MITRE ATT&CK en el orden de un ataque", tags: ["dfir", "GRU"],
+    steps: ["Acceso inicial", "Ejecución", "Persistencia", "Escalada de privilegios", "Movimiento lateral", "Exfiltración"],
+    why: "Es un subconjunto de las tácticas de ATT&CK en el orden típico de una intrusión." }
+);

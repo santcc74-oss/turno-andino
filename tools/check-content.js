@@ -4,7 +4,7 @@ const path = require("path");
 global.window = global;
 const root = path.join(__dirname, "..");
 ["data/glossary.js", "data/distractors.js", "data/modules-a.js", "data/modules-b.js", "data/modules-c.js", "data/objchecks.js", "data/extras.js",
-  "content-world.js", "content-cases.js", "content-real.js"].forEach((f) => { try { require(path.join(root, f)); } catch (e) { if (!/content-real/.test(f)) throw e; } });
+  "data/questions-extra.js", "content-world.js", "content-cases.js", "content-real.js", "content-careers.js"].forEach((f) => require(path.join(root, f)));
 
 /* Aplica los distractores igual que state.js. */
 const byId = (id) => { let m;
@@ -20,7 +20,11 @@ MODULES.forEach((m) => Array.isArray(m.quiz) && m.quiz.forEach((q, i) => qs.push
 Object.entries(OBJCHECKS).forEach(([m, a]) => a.forEach((q, i) => qs.push([m + "-o" + i, q.a, q.c])));
 EXTRA_Q.forEach((q, i) => qs.push(["x-" + i, q.a, q.c]));
 CALLS.forEach((q, i) => qs.push(["c" + i, q.opts, q.c]));
-if (global.SIEMQ) SIEMQ.forEach((q, i) => qs.push(["s" + i, q.opts, q.c]));
+SIEMQ.forEach((q, i) => qs.push(["s" + i, q.opts, q.c]));
+Object.entries(EXTRA_CITY).forEach(([m, a]) => a.forEach((q, i) => qs.push(["e-" + m + "-" + i, q.a, q.c])));
+CAREERS.forEach((c) => c.q.forEach((q, i) => qs.push(["cq-" + c.id + "-" + i, q.a, q.c])));
+const pos = {}; qs.forEach(([id, a, c]) => { pos[c] = (pos[c] || 0) + 1; });
+console.log("Posición de la correcta (0 = primera):", JSON.stringify(pos));
 
 let longest = 0, clear = [];
 for (const [id, a, c] of qs) {

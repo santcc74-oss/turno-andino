@@ -9,9 +9,16 @@
   const play = () => $("#play");
 
   /* Texto de CyberRuta: quita marcas del glosario y permite <code>. */
-  function fmt(s) {
+  function fmt(s, linkIt) {
     s = String(s == null ? "" : s).replace(/\{\{(\w+)\|([^}]+)\}\}/g, "$2").replace(/\{\{(\w+)\}\}/g, (_, k) => (GLOSSARY[k] ? GLOSSARY[k][0] : k));
-    return esc(s).replace(/&lt;(\/?)code&gt;/g, "<$1code>");
+    let e = esc(s);
+    if (linkIt) e = GLOSS.link(e);
+    return e.replace(/&lt;(\/?)code&gt;/g, "<$1code>");
+  }
+  /* Todo el texto de un ticket, para listar sus palabras técnicas. */
+  function ticketText(t) {
+    return [t.q, t.w, t.why, t.subj, t.body, t.say, t.prompt, t.title, t.text, t.target, t.lang,
+      (t.opts || []).map((o) => o.t).join(" "), (t.items || []).map((x) => x.name + " " + x.id).join(" "), (t.lines || []).join(" ")].filter(Boolean).join(" · ");
   }
 
   /* ——— Construcción de tickets ——— */
@@ -44,6 +51,9 @@
     const c = CVES[i];
     return { type: "cve", id: "v" + i, why: c.why, items: shuffle(c.items.map((x, k) => Object.assign({ ok: k === c.c }, x))) };
   }
+
+  function scanTicket(i) { return Object.assign({ type: "scan", id: "sc" + i }, SCANS[i]); }
+  function riskTicket(i) { return Object.assign({ type: "risk", id: "rk" + i }, RISKS[i]); }
 
   function tagged(list, code) {
     const idx = list.map((x, i) => i).filter((i) => (list[i].tags || []).includes(code));
@@ -98,19 +108,23 @@
       why: pairs.map((p) => p[0] + " = " + p[1]).join(" · ") };
   }
 
-  function makeOfType(type, city, used) {
-    const fresh = (ids) => { const f = ids.filter((id) => !used.has(id)); return f.length ? f : ids; };
-    if (type === "quiz") { const id = pick(fresh(TA.quizIdsFor(city))); return quizTicket(id); }
-    if (type === "mail") return msgTicket(pick(fresh(TA.msgIds())));
-    if (type === "call") { const i = +pick(fresh(CALLS.map((_, i) => "c" + i))).slice(1); return callTicket(i); }
-    if (type === "log") { const i = +pick(fresh(tagged(LOGS, city.code).map((i) => "l" + i))).slice(1); return logTicket(i); }
-    if (type === "order") return orderTicket(ORDERS[pick(tagged(ORDERS, city.code))]);
+  /* used = conceptos ya usados en este turno. Se prefiere siempre lo que menos has visto. */
+  function makeOfType(type, city, used, tag) {
+    const tg = tag || city.code;
+    const pf = (ids) => TA.pickFresh(ids, used);
+    if (type === "quiz") return quizTicket(pf(TA.quizIdsFor(city)));
+    if (type === "mail") return msgTicket(pf(TA.msgIds()));
+    if (type === "call") return callTicket(+pf(CALLS.map((_, i) => "c" + i)).slice(1));
+    if (type === "log") return logTicket(+pf(tagged(LOGS, tg).map((i) => "l" + i)).slice(1));
+    if (type === "order") return orderTicket(ORDERS[+pf(tagged(ORDERS, tg).map((i) => "o" + i)).slice(1)]);
+    if (type === "scan") return scanTicket(+pf(SCANS.map((_, i) => "sc" + i)).slice(2));
+    if (type === "risk") return riskTicket(+pf(RISKS.map((_, i) => "rk" + i)).slice(2));
     if (type === "decode") return decodeTicket(city.code);
     if (type === "ports") return portsTicket();
     if (type === "english") return englishTicket(city);
     const byPrefix = (list, prefix, make, useTags) => {
-      const idx = useTags ? tagged(list, city.code) : list.map((x, i) => i);
-      return make(+pick(fresh(idx.map((i) => prefix + i))).slice(1));
+      const idx = useTags ? tagged(list, tg) : list.map((x, i) => i);
+      return make(+pf(idx.map((i) => prefix + i)).slice(1));
     };
     if (type === "code") return byPrefix(CODE, "k", codeTicket, true);
     if (type === "header") return byPrefix(HEADERS, "h", headerTicket, false);
@@ -126,6 +140,9 @@
     if (/^h\d+$/.test(id)) return HEADERS[+id.slice(1)] ? headerTicket(+id.slice(1)) : null;
     if (/^s\d+$/.test(id)) return SIEMQ[+id.slice(1)] ? siemTicket(+id.slice(1)) : null;
     if (/^v\d+$/.test(id)) return CVES[+id.slice(1)] ? cveTicket(+id.slice(1)) : null;
+    if (/^sc\d+$/.test(id)) return SCANS[+id.slice(2)] ? scanTicket(+id.slice(2)) : null;
+    if (/^rk\d+$/.test(id)) return RISKS[+id.slice(2)] ? riskTicket(+id.slice(2)) : null;
+    if (/^cq-/.test(id)) { const t = quizTicket(id); if (t) { t.career = id.split("-")[1]; t.label = "Caso de especialidad"; } return t; }
     return quizTicket(id);
   }
 
@@ -133,7 +150,7 @@
     const used = new Set(), out = [];
     shuffle(TA.dueReview()).slice(0, 2).forEach((id) => {
       const t = ticketFromId(id);
-      if (t) { t.review = true; out.push(t); used.add(id); }
+      if (t) { t.review = true; out.push(t); used.add(TA.concept(id)); }
     });
     const bag = [];
     Object.entries(city.games).forEach(([type, w]) => { for (let i = 0; i < w; i++) bag.push(type); });
@@ -148,10 +165,13 @@
       if (type === last && !needQuiz && bag.some((t) => t !== type)) continue;
       const t = makeOfType(type, city, used);
       if (!t) continue;
-      if (t.id) { if (used.has(t.id)) continue; used.add(t.id); }
+      if (t.id) { if (used.has(TA.concept(t.id))) continue; used.add(TA.concept(t.id)); }
       out.push(t); last = type; count[type] = (count[type] || 0) + 1;
     }
-    return shuffle(out);
+    /* Con especialidad, 2 de los 6 tickets son de tu carrera. */
+    const extra = CAREER.tickets(city, { quizById: quizTicket, ofType: (tp, tag) => makeOfType(tp, city, used, tag), usedConcepts: used });
+    const base = out.slice(0, TICKETS_PER_SHIFT - extra.length);
+    return shuffle(base.concat(extra));
   }
 
   /* ——— Ciclo del turno ——— */
@@ -202,6 +222,7 @@
     const body = $("#p-body");
     const R = RENDER[t.type];
     R(body, t, (ok, extra) => resolve(ok, extra));
+    if (t.career) { const l = body.querySelector(".t-label"); if (l) l.insertAdjacentHTML("afterbegin", '<span class="tag car-tag">Especialidad</span> '); }
     if (cur.fb) showFeedback(cur.fb);
     else startTimer(t);
   }
@@ -232,12 +253,14 @@
     cur.health -= hit; cur.xp += gain;
     S.answered += 1; if (ok) S.correct += 1;
     if (t.id) TA.markResult(t.id, ok);
-    if (t.type === "quiz") S.seen[t.id] = 1;
+    TA.markSeen(t.id);
+    const career = CAREER.addXp(t, ok);
+    if (career && career.up) { cur.careerUp = career.up; PROG.toast({ kind: "mission", title: "Ascenso en tu especialidad", text: career.up, sub: "" }); }
     let cama = null;
     if (t.cama) { cama = ok ? "caught" : "missed"; S.cama[cama] += 1; }
     cur.res.push({ ok, type: t.type, id: t.id || null, label: shortLabel(t), cama });
     PROG.ticket(t, ok, fast, cama);
-    cur.fb = { ok, gain, fast, hit, shielded, cama, extra: extra || "" };
+    cur.fb = { ok, gain, fast, hit, shielded, cama, career, extra: extra || "" };
     TA.save();
     const head = $(".p-head", play());
     if (head) head.outerHTML = header(cur, TA.cityByCode(cur.city));
@@ -256,6 +279,8 @@
     if (t.type === "header") return "Encabezados de correo";
     if (t.type === "siem") return "SIEM: " + t.q;
     if (t.type === "cve") return "Priorizar vulnerabilidades";
+    if (t.type === "scan") return "Escaneo: " + t.target;
+    if (t.type === "risk") return "Riesgo: " + t.text.slice(0, 70);
     return t.label || t.prompt;
   }
 
@@ -268,15 +293,17 @@
     if (fb.ok) lines.push(`<span class="chip good">+${fb.gain} reputación${fb.fast ? " · bono de rapidez" : ""}</span>`);
     if (fb.hit) lines.push(`<span class="chip bad">−${fb.hit} salud del banco</span>`);
     if (fb.shielded) lines.push(`<span class="chip">La llave FIDO2 absorbió el error</span>`);
+    if (fb.career) lines.push(`<span class="chip car">+${fb.career.gain} especialidad</span>`);
     if (fb.cama === "caught") lines.push(`<span class="chip cama">Atrapaste al Camaleón</span>`);
     if (fb.cama === "missed") lines.push(`<span class="chip bad">El Camaleón se escapó</span>`);
     $("#p-sheet").innerHTML = `<div class="sheet ${fb.ok ? "is-ok" : "is-bad"}" role="dialog" aria-live="polite">
       <div class="sheet-head">${reaction(t, fb)}<p class="sheet-k">${fb.ok ? "Bien resuelto" : "No era así"}</p></div>
       ${right ? `<p class="sheet-right">Respuesta correcta: <b>${fmt(right.t)}</b></p>` : ""}
       ${fb.extra ? `<p class="sheet-why">${fb.extra}</p>` : ""}
-      ${why ? `<p class="sheet-why">${fmt(why)}</p>` : ""}
+      ${why ? `<p class="sheet-why">${fmt(why, true)}</p>` : ""}
       ${t.fix ? `<div class="sheet-fix"><small>Así se corrige</small><code>${hl(t.fix)}</code></div>` : ""}
       <div class="chips">${lines.join("")}</div>
+      ${GLOSS.chips(ticketText(t))}
       <button class="btn primary wide" id="p-next">${last ? "Cerrar el turno" : "Siguiente ticket"}</button>
     </div>`;
     play().classList.add("has-sheet");
@@ -345,7 +372,7 @@
     const res = cur.res;
     S.cur = null;
     TA.save();
-    showResult({ city, stars, acc, xp, pay, res, promo: after.i > before.i ? after : null, examReady, health: cur.health, prog });
+    showResult({ city, stars, acc, xp, pay, res, promo: after.i > before.i ? after : null, examReady, health: cur.health, prog, careerUp: cur.careerUp || null });
   }
 
   function starsSvg(n) {
@@ -368,7 +395,7 @@
         <div><dt>Salario</dt><dd>${TA.money(r.pay)}</dd></div>
         <div><dt>Racha</dt><dd>${TA.S.streak.cur} ${TA.S.streak.cur === 1 ? "día" : "días"}</dd></div>
       </dl>
-      ${r.examReady ? `<div class="banner stamp"><p class="eyebrow">Examen de sede desbloqueado</p><h3>Sala de espera · ${esc(r.city.city)}</h3><p>${EXAM_N} preguntas de la sede. Con ${EXAM_PASS} aciertos ganas el sello y abres la siguiente ruta.</p><button class="btn primary wide" id="r-exam">Presentar el examen</button></div>`
+      ${r.examReady ? `<div class="banner exam-b"><p class="eyebrow">Examen de sede desbloqueado</p><h3>Sala de espera · ${esc(r.city.city)}</h3><p>${EXAM_N} preguntas de la sede. Con ${EXAM_PASS} aciertos ganas el sello y abres la siguiente ruta.</p><button class="btn primary wide" id="r-exam">Presentar el examen</button></div>`
         : !TA.S.stamps[r.city.code] ? `<p class="small center">Te ${need === 1 ? "falta 1 turno" : "faltan " + need + " turnos"} de 2 estrellas o más para desbloquear el examen de ${esc(r.city.city)}.</p>` : ""}
       ${wrong.length ? `<div class="review"><p class="eyebrow">Para repasar · vuelven en tus próximos turnos</p><ul>${wrong.map((w) => `<li>${fmt(w.label)}</li>`).join("")}</ul></div>` : ""}
       <div class="stack">
@@ -380,7 +407,13 @@
     $("#r-home").onclick = close;
     if ($("#r-exam")) $("#r-exam").onclick = () => exam(r.city.code);
     play().scrollTop = 0;
-    if (r.promo) setTimeout(() => ART.promoCeremony(r.promo), ART.reduced() ? 0 : 900);
+    const afterPromo = () => CAREER.ensureOffer();
+    if (r.promo) setTimeout(() => ART.promoCeremony(r.promo, afterPromo), ART.reduced() ? 0 : 900);
+    else if (r.careerUp) setTimeout(() => {
+      const c = CAREER.current();
+      ART.confetti();
+      ART.ceremony(`<p class="eyebrow mono">Especialidad · ${esc(c.name)}</p><div class="car-badge" style="--h:${c.hue}" aria-hidden="true">${esc(c.short)}</div><h2>Ahora eres ${esc(r.careerUp)}</h2><p>Subiste de nivel en tu carrera. Sigue resolviendo casos de especialidad para el próximo cargo.</p>`, [["ok", "Seguir"]]);
+    }, ART.reduced() ? 0 : 900);
   }
 
   /* ——— Minijuegos ——— */
@@ -433,7 +466,51 @@
   }
   const sevOf = (v) => (v >= 9 ? ["crit", "Crítica"] : v >= 7 ? ["high", "Alta"] : v >= 4 ? ["med", "Media"] : ["low", "Baja"]);
 
+  const RISK_LV = (p, i) => (p * i >= 9 ? 3 : p * i >= 6 ? 2 : p * i >= 3 ? 1 : 0);
+  const RISK_NAMES = ["Bajo", "Medio", "Alto", "Crítico"];
+
   const RENDER = {
+    scan(root, t, done) {
+      root.innerHTML = `<article class="ticket">
+        <p class="t-label">Escaneo autorizado · Nmap${t.review ? ' <span class="tag">repaso</span>' : ""}</p>
+        <h3 class="t-q">¿Qué hallazgo reportas como el más grave?</h3>
+        <p class="small mono">${esc(t.target)}</p>
+      </article>
+      <div class="log scanout" role="list">${t.lines.map((l, i) => `<button class="log-line mono" role="listitem" data-i="${i}" ${i === 0 ? "disabled" : ""}>${esc(l)}</button>`).join("")}</div>`;
+      const btns = [...root.querySelectorAll(".log-line")];
+      btns.forEach((b) => b.onclick = () => {
+        btns.forEach((x) => x.disabled = true);
+        btns[t.bad].classList.add("right");
+        const i = +b.dataset.i;
+        if (i !== t.bad) b.classList.add("wrong");
+        done(i === t.bad);
+      });
+    },
+
+    risk(root, t, done) {
+      const lv = RISK_LV(t.p, t.i);
+      const PL = ["", "Baja", "Media", "Alta"], IL = ["", "Bajo", "Medio", "Alto"];
+      let cells = "";
+      for (let p = 3; p >= 1; p--) {
+        cells += `<span class="rm-l">${PL[p]}</span>`;
+        for (let i = 1; i <= 3; i++) cells += `<button class="rm-c lv-${RISK_LV(p, i)}" data-p="${p}" data-i="${i}" aria-label="Probabilidad ${PL[p]}, impacto ${IL[i]}">${RISK_NAMES[RISK_LV(p, i)]}</button>`;
+      }
+      cells += `<span></span>` + [1, 2, 3].map((i) => `<span class="rm-l">${IL[i]}</span>`).join("");
+      root.innerHTML = `<article class="ticket">
+        <p class="t-label">Matriz de riesgo${t.review ? ' <span class="tag">repaso</span>' : ""}</p>
+        <h3 class="t-q">¿En qué casilla va este riesgo?</h3>
+        <p>${GLOSS.link(esc(t.text))}</p>
+      </article>
+      <div class="rm"><span class="rm-ax rm-ay">Probabilidad ↑</span><div class="rm-grid">${cells}</div><span class="rm-ax">Impacto →</span></div>`;
+      const btns = [...root.querySelectorAll(".rm-c")];
+      btns.forEach((b) => b.onclick = () => {
+        btns.forEach((x) => { x.disabled = true; if (+x.dataset.p === t.p && +x.dataset.i === t.i) x.classList.add("right"); });
+        const ok = RISK_LV(+b.dataset.p, +b.dataset.i) === lv;
+        if (!(+b.dataset.p === t.p && +b.dataset.i === t.i)) b.classList.add(ok ? "near" : "wrong");
+        done(ok, "Nivel correcto: <b>" + RISK_NAMES[lv] + "</b> (probabilidad " + PL[t.p].toLowerCase() + ", impacto " + IL[t.i].toLowerCase() + ").");
+      });
+    },
+
     code(root, t, done) {
       root.innerHTML = `<article class="ticket">
         <p class="t-label">Revisión de código · ${esc(t.lang)}${t.review ? ' <span class="tag">repaso</span>' : ""}</p>
@@ -474,7 +551,7 @@
     siem(root, t, done) {
       root.innerHTML = `<article class="ticket">
         <p class="t-label">Consulta al SIEM · ${esc(t.lang)}${t.review ? ' <span class="tag">repaso</span>' : ""}</p>
-        <h3 class="t-q">${esc(t.q)}</h3>
+        <h3 class="t-q">${GLOSS.link(esc(t.q))}</h3>
       </article>`;
       options(root, t.opts, done, "code-opts");
     },
@@ -504,7 +581,7 @@
       root.innerHTML = `<article class="ticket">
         <p class="t-label">${esc(t.label)}${t.review ? ' <span class="tag">repaso</span>' : ""}</p>
         ${who(t)}
-        <h3 class="t-q">${fmt(t.q)}</h3>
+        <h3 class="t-q">${fmt(t.q, true)}</h3>
       </article>`;
       options(root, t.opts, done);
     },
@@ -516,7 +593,7 @@
           <article class="ticket mail" id="mail-card" tabindex="0" aria-label="Mensaje a revisar">
             <p class="m-from mono">${esc(t.from)}</p>
             ${t.subj ? `<h3 class="m-subj">${esc(t.subj)}</h3>` : ""}
-            <p class="m-body">${esc(t.body)}</p>
+            <p class="m-body">${GLOSS.link(esc(t.body))}</p>
           </article>
         </div>
         <p class="small center">Desliza a la derecha si es phishing, a la izquierda si es legítimo, o usa los botones.</p>
@@ -537,7 +614,7 @@
       $("#m-legit").onclick = () => decide(false);
       $("#m-phish").onclick = () => decide(true);
       let x0 = null, dx = 0;
-      card.addEventListener("pointerdown", (e) => { if (answered) return; e.preventDefault(); x0 = e.clientX; dx = 0; card.setPointerCapture(e.pointerId); card.classList.add("drag"); });
+      card.addEventListener("pointerdown", (e) => { if (answered || e.target.closest(".gl")) return; e.preventDefault(); x0 = e.clientX; dx = 0; card.setPointerCapture(e.pointerId); card.classList.add("drag"); });
       card.addEventListener("pointermove", (e) => {
         if (x0 === null) return;
         dx = e.clientX - x0;
@@ -559,7 +636,7 @@
         <p class="t-label">Llamada entrante${t.review ? ' <span class="tag">repaso</span>' : ""}</p>
         <div class="caller"><span class="caller-pic">${ART.portrait(t.face || "stranger", t.face === "hernan" || t.face === "clienta" ? "worried" : "neutral")}<span class="ring" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M5 4h4l2 5-2.5 1.5a11 11 0 0 0 5 5L15 13l5 2v4a2 2 0 0 1-2 2A16 16 0 0 1 3 6a2 2 0 0 1 2-2z"/></svg></span></span>
           <div><b>${esc(t.who)}</b><small class="mono">${esc(t.from)}</small></div></div>
-        <blockquote class="say">${esc(t.say)}</blockquote>
+        <blockquote class="say">${GLOSS.link(esc(t.say))}</blockquote>
         <p class="t-sub">¿Qué haces?</p>
       </article>`;
       options(root, t.opts, done);
@@ -652,7 +729,9 @@
     let ids = [];
     CITIES.filter((c) => TA.cityOpen(c.code)).forEach((c) => { ids = ids.concat(TA.quizIdsFor(c)); });
     const seen = ids.filter((id) => S.seen[id]);
-    const pool = shuffle(seen.length >= 12 ? seen : ids);
+    const seenC = new Set();
+    const pool = shuffle(seen.length >= 12 ? seen : ids).sort((a, b) => TA.seenCount(a) - TA.seenCount(b))
+      .filter((id) => { const c = TA.concept(id); if (seenC.has(c)) return false; seenC.add(c); return true; });
     const el = play();
     el.hidden = false; document.body.classList.add("playing"); window.scrollTo(0, 0);
     let k = 0, right = 0, misses = [], left = 60000, lastT = Date.now(), done = false;
@@ -687,7 +766,7 @@
         PROG.ticket({ type: "quiz", id }, o.ok, false, null);
         if (o.ok) { right += 1; TA.markResult(id, true); }
         else { b.classList.add("wrong"); misses.push({ q, id }); TA.markResult(id, false); }
-        S.seen[id] = 1;
+        S.seen[id] = 1; TA.markSeen(id);
         $("#f-score").textContent = right + (right === 1 ? " acierto" : " aciertos");
         setTimeout(() => { if (!done) ask(); }, o.ok ? 450 : 1100);
       });
@@ -703,7 +782,7 @@
         <p class="eyebrow mono">REPASO RELÁMPAGO</p>
         <h2>${right} ${right === 1 ? "acierto" : "aciertos"} en 60 segundos</h2>
         <p class="center">${record ? "Nuevo récord personal." : "Tu récord: " + S.flashBest + "."} Ganaste +${xp} de reputación.</p>
-        ${misses.length ? `<div class="review"><p class="eyebrow">Lo que fallaste</p><ul>${misses.map((m) => `<li><b>${fmt(m.q.q)}</b><br>${fmt(m.q.a[m.q.c])}${m.q.w ? " · " + fmt(m.q.w) : ""}</li>`).join("")}</ul></div>` : ""}
+        ${misses.length ? `<div class="review"><p class="eyebrow">Lo que fallaste</p><ul>${misses.map((m) => `<li><b>${fmt(m.q.q, true)}</b><br>${fmt(m.q.a[m.q.c])}${m.q.w ? " · " + fmt(m.q.w, true) : ""}</li>`).join("")}</ul></div>` : ""}
         <div class="stack"><button class="btn primary wide" id="f-again">Otra ronda</button><button class="btn wide" id="f-home">Volver al inicio</button></div>
       </div>`;
       $("#f-again").onclick = flash;
@@ -718,7 +797,9 @@
     stopTimer();
     if (!S.exam || S.exam.city !== code) {
       const city = TA.cityByCode(code);
-      S.exam = { city: code, ids: shuffle(TA.quizIdsFor(city)).slice(0, EXAM_N), i: 0, right: 0, misses: [], last: null };
+      const seenC = new Set();
+      const ids = shuffle(TA.quizIdsFor(city)).filter((id) => { const c = TA.concept(id); if (seenC.has(c)) return false; seenC.add(c); return true; });
+      S.exam = { city: code, ids: ids.slice(0, EXAM_N), i: 0, right: 0, misses: [], last: null };
       TA.save();
     }
     play().hidden = false; document.body.classList.add("playing"); window.scrollTo(0, 0);
@@ -741,7 +822,7 @@
     $("#ex-x").onclick = close;
     if (!q || !Array.isArray(q.a)) { ex.i += 1; ex.last = null; TA.save(); return renderExam(); }
     const body = $("#ex-body");
-    body.innerHTML = `<article class="ticket"><p class="t-label">Pregunta ${shown + 1}</p><h3 class="t-q">${fmt(q.q)}</h3></article>`;
+    body.innerHTML = `<article class="ticket"><p class="t-label">Pregunta ${shown + 1}</p><h3 class="t-q">${fmt(q.q, true)}</h3></article>`;
     const opts = q.a.map((t, i) => ({ t, ok: i === q.c }));
     const wrap = document.createElement("div"); wrap.className = "opts";
     wrap.innerHTML = opts.map((o, i) => `<button class="opt" data-i="${i}">${fmt(o.t)}</button>`).join("");
@@ -753,7 +834,7 @@
       const ok = opts[picked].ok;
       const box = document.createElement("div");
       box.className = "ex-why " + (ok ? "is-ok" : "is-bad");
-      box.innerHTML = `<p class="sheet-k">${ok ? "Correcto" : "Incorrecto"}</p>${q.w ? `<p>${fmt(q.w)}</p>` : ""}<button class="btn primary wide" id="ex-next">${ex.i >= ex.ids.length ? "Ver resultado" : "Siguiente pregunta"}</button>`;
+      box.innerHTML = `<p class="sheet-k">${ok ? "Correcto" : "Incorrecto"}</p>${q.w ? `<p>${fmt(q.w, true)}</p>` : ""}${GLOSS.chips(q.q + " " + q.a.join(" ") + " " + (q.w || ""))}<button class="btn primary wide" id="ex-next">${ex.i >= ex.ids.length ? "Ver resultado" : "Siguiente pregunta"}</button>`;
       body.appendChild(box);
       $("#ex-next").onclick = () => { ex.last = null; TA.save(); renderExam(); play().scrollTop = 0; };
       $("#ex-next").focus({ preventScroll: true });
@@ -763,7 +844,7 @@
       const i = +b.dataset.i, ok = opts[i].ok;
       if (ok) ex.right += 1; else ex.misses.push(id);
       PROG.ticket({ type: "quiz", id }, ok, false, null);
-      TA.markResult(id, ok); S.seen[id] = 1; S.answered += 1; if (ok) S.correct += 1;
+      TA.markResult(id, ok); TA.markSeen(id); S.answered += 1; if (ok) S.correct += 1;
       ex.last = { k: ex.i, picked: i }; ex.i += 1;
       TA.save();
       $("#ex-score").textContent = ex.right + " ✓";

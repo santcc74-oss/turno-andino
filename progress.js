@@ -23,12 +23,14 @@
     m22: 5, m23: 5, m26: 5, m27: 5,
   };
   const DOM_OF_EXTRA = [1, 2, 1, 1, 3, 4, 4, 2, 5, 4, 4, 5, 2, 3, 3];
-  const DOM_OF_TYPE = { mail: 2, call: 2, header: 2, code: 2, log: 4, siem: 4, cve: 4, order: 4, decode: 1, ports: 3 };
+  const DOM_OF_TYPE = { mail: 2, call: 2, header: 2, code: 2, log: 4, siem: 4, cve: 4, order: 4, decode: 1, ports: 3, scan: 4, risk: 5 };
   function domOf(t) {
     const id = t.id || "";
     let m;
     if ((m = /^x-(\d+)$/.exec(id))) return DOM_OF_EXTRA[+m[1]];
     if ((m = /^(m\w+)-[qo]\d+$/.exec(id))) return DOM_OF_MOD[m[1]];
+    if ((m = /^e-(m\w+)-\d+$/.exec(id))) return DOM_OF_MOD[m[1]];
+    if (/^cq-/.test(id)) { const q = TA.quizById(id); return q ? q.d : 0; }
     if (t.type === "match") return t.en ? 0 : 3;
     return DOM_OF_TYPE[t.type] || 0;
   }
@@ -69,6 +71,8 @@
     { id: "siem", t: "Elige bien 2 consultas del SIEM", goal: 2, on: "ticket", needs: "siem", when: (e) => e.type === "siem" && e.ok },
     { id: "cve", t: "Prioriza bien 2 vulnerabilidades", goal: 2, on: "ticket", needs: "cve", when: (e) => e.type === "cve" && e.ok },
     { id: "header", t: "Analiza bien 2 encabezados de correo", goal: 2, on: "ticket", needs: "header", when: (e) => e.type === "header" && e.ok },
+    { id: "career", t: "Resuelve bien 3 casos de tu especialidad", goal: 3, on: "ticket", needs: "career", when: (e) => e.career && e.ok },
+    { id: "gloss", t: "Aprende 3 palabras nuevas del diccionario", goal: 3, on: "gloss" },
   ];
   const WEEKLY = [
     { id: "w-turnos", t: "Completa 10 turnos esta semana", goal: 10, on: "shift" },
@@ -88,6 +92,7 @@
   function availableTypes() {
     const set = new Set();
     CITIES.filter((c) => TA.cityOpen(c.code)).forEach((c) => Object.keys(c.games).forEach((g) => set.add(g)));
+    if (S().career) set.add("career");
     return set;
   }
   function ensureMissions() {
@@ -150,6 +155,9 @@
   const REWARD = { bronce: 30, plata: 80, oro: 200 };
   const rank = () => TA.rankIndex(S().xp);
   const stamps = () => Object.keys(S().stamps).length;
+  const careerLevels = () => Object.values(S().careers || {}).map((xp) => (window.CAREER ? CAREER.levelOf(xp) : 0));
+  const careerTop = () => Math.max(0, ...careerLevels());
+  const careerCount = (lvl) => careerLevels().filter((l) => l >= lvl).length;
   const A = (id, g, tier, name, desc, prog, secret) => ({ id, g, tier, name, desc, prog, secret: !!secret });
   const ACH = [
     A("a-turno1", "career", "bronce", "Primer turno", "Termina tu primer turno.", () => [S().shifts, 1]),
@@ -201,6 +209,12 @@
     A("m-20", "missions", "plata", "Profesional", "Cobra 20 misiones diarias.", () => [val("missions"), 20]),
     A("m-w", "missions", "plata", "Semana redonda", "Cobra una misión semanal.", () => [val("weeklies"), 1]),
 
+    A("k-pick", "career", "bronce", "Especialista", "Elige tu especialidad.", () => [S().career ? 1 : 0, 1]),
+    A("k-lvl2", "career", "plata", "Te lo tomas en serio", "Llega al segundo cargo de tu especialidad.", () => [careerTop(), 1]),
+    A("k-lvl4", "career", "oro", "Referente del área", "Llega al último cargo de una especialidad.", () => [careerTop(), 3]),
+    A("k-multi", "career", "plata", "Polivalente", "Llega al segundo cargo en 3 especialidades distintas.", () => [careerCount(1), 3]),
+    A("g-10", "craft", "bronce", "Curioso", "Consulta 10 palabras del diccionario.", () => [Object.keys(st().words || {}).length, 10]),
+    A("g-50", "craft", "plata", "Diccionario andante", "Consulta 50 palabras del diccionario.", () => [Object.keys(st().words || {}).length, 50]),
     A("s-shield", "secret", "bronce", "Salvado por la llave", "Tu llave FIDO2 absorbió un error.", () => [val("shield"), 1], true),
     A("s-edge", "secret", "bronce", "Al límite", "Termina un turno con el banco al 20 %.", () => [val("lowHp"), 1], true),
     A("s-double", "secret", "plata", "Doble Camaleón", "Atrapa al Camaleón dos veces en un mismo turno.", () => [val("doubleCama"), 1], true),
@@ -241,7 +255,7 @@
       if (ok) { inc("mailRun"); top("mailBest", val("mailRun")); } else st().mailRun = 0;
     }
     recordDomain(t, ok);
-    bumpMissions("ticket", { type: t.type, ok, fast, cama, en: !!t.en });
+    bumpMissions("ticket", { type: t.type, ok, fast, cama, en: !!t.en, career: !!t.career });
     check();
   }
   function shift(e) {
@@ -260,6 +274,7 @@
     check();
   }
   function flash(e) { bumpMissions("flash", e); check(); }
+  function gloss() { bumpMissions("gloss", {}); check(); }
   function exam(e) {
     const tries = "examTries_" + e.city;
     inc(tries);
@@ -309,5 +324,5 @@
     setTimeout(() => { el.classList.add("out"); setTimeout(() => { el.remove(); nextToast(); }, 300); }, 2600);
   }
 
-  window.PROG = { ticket, shift, flash, exam, buy, check, claim, missions, ensureMissions, achievements, medal, readiness, DOMAINS, toast };
+  window.PROG = { ticket, shift, flash, exam, buy, gloss, check, claim, missions, ensureMissions, achievements, medal, readiness, DOMAINS, toast };
 })();
