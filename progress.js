@@ -23,7 +23,7 @@
     m22: 5, m23: 5, m26: 5, m27: 5,
   };
   const DOM_OF_EXTRA = [1, 2, 1, 1, 3, 4, 4, 2, 5, 4, 4, 5, 2, 3, 3];
-  const DOM_OF_TYPE = { mail: 2, call: 2, header: 2, code: 2, log: 4, siem: 4, cve: 4, order: 4, decode: 1, ports: 3, scan: 4, risk: 5 };
+  const DOM_OF_TYPE = { mail: 2, call: 2, header: 2, code: 2, log: 4, siem: 4, cve: 4, order: 4, decode: 1, ports: 3, scan: 4, risk: 5, cmd: 4 };
   function domOf(t) {
     const id = t.id || "";
     let m;
@@ -73,6 +73,7 @@
     { id: "header", t: "Analiza bien 2 encabezados de correo", goal: 2, on: "ticket", needs: "header", when: (e) => e.type === "header" && e.ok },
     { id: "career", t: "Resuelve bien 3 casos de tu especialidad", goal: 3, on: "ticket", needs: "career", when: (e) => e.career && e.ok },
     { id: "gloss", t: "Aprende 3 palabras nuevas del diccionario", goal: 3, on: "gloss" },
+    { id: "cmd", t: "Elige bien 2 comandos en la terminal", goal: 2, on: "ticket", needs: "cmd", when: (e) => e.type === "cmd" && e.ok },
   ];
   const WEEKLY = [
     { id: "w-turnos", t: "Completa 10 turnos esta semana", goal: 10, on: "shift" },
@@ -219,6 +220,11 @@
     A("co-ethic", "company", "plata", "Con principios", "Toma la decisión correcta en 3 dilemas éticos.", () => [co("ethic"), 3]),
     A("co-ir", "company", "plata", "Respuesta de libro", "Maneja bien 10 incidentes de tu empresa.", () => [co("ok"), 10]),
     A("co-branch", "company", "oro", "Sucursal", "Abre una sucursal en otra ciudad.", () => [S().co ? Object.keys(S().co.branches).length : 0, 1]),
+    A("h-case3", "craft", "bronce", "Historiador", "Cierra 3 expedientes del archivo histórico.", () => [window.HIST ? HIST.casesDone() : 0, 3]),
+    A("h-case7", "craft", "oro", "Archivo completo", "Cierra los 7 expedientes del archivo.", () => [window.HIST ? HIST.casesDone() : 0, 7]),
+    A("h-att10", "craft", "plata", "Coleccionista ATT&CK", "Colecciona 10 técnicas en tu álbum.", () => [window.HIST ? HIST.albumCount() : 0, 10]),
+    A("h-att20", "craft", "oro", "Álbum completo", "Colecciona las 20 técnicas del álbum.", () => [window.HIST ? HIST.albumCount() : 0, 20]),
+    A("o-cmd", "craft", "plata", "Mano de terminal", "Elige bien 10 comandos reales.", () => [val("ok_cmd"), 10]),
     A("k-pick", "career", "bronce", "Especialista", "Elige tu especialidad.", () => [S().career ? 1 : 0, 1]),
     A("k-lvl2", "career", "plata", "Te lo tomas en serio", "Llega al segundo cargo de tu especialidad.", () => [careerTop(), 1]),
     A("k-lvl4", "career", "oro", "Referente del área", "Llega al último cargo de una especialidad.", () => [careerTop(), 3]),

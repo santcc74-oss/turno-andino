@@ -8,10 +8,14 @@ Eres analista del SOC del Banco Andino, un banco ficticio. Cada turno dura unos 
 
 ## Qué hay adentro
 
-- **13 minijuegos:** phishing por correo, SMS, WhatsApp y QR; llamadas de estafadores; cazar la línea sospechosa en logs; **revisión de código real** (Python, Java, JavaScript, configuraciones); **encabezados de correo** con SPF, DKIM y DMARC; **consultas de SIEM** en KQL, SPL y Wazuh; **priorización de CVE reales** (Log4Shell, EternalBlue, MOVEit, Zerologon…); procedimientos, puertos, cifrados, resultados de escaneos, matriz de riesgo y preguntas del equipo.
+- **14 minijuegos:** phishing por correo, SMS, WhatsApp y QR; llamadas de estafadores; cazar la línea sospechosa en logs; **revisión de código real** (Python, Java, JavaScript, configuraciones); **encabezados de correo** con SPF, DKIM y DMARC; **consultas de SIEM** en KQL, SPL y Wazuh; **priorización de CVE reales** (Log4Shell, EternalBlue, MOVEit, Zerologon…); procedimientos, puertos, cifrados, resultados de escaneos, matriz de riesgo, comandos de terminal y preguntas del equipo.
 - **Examen de sede** para ganar cada sello del pasaporte.
 - **7 carreras** para elegir al llegar a Analista SOC N2: Blue Team/SOC, respuesta a incidentes y forense, pentesting ético, AppSec/DevSecOps, fraude bancario, nube y GRC. Cada una con sus cargos, sus casos, minijuegos propios (escaneos, matriz de riesgo) y la certificación real de referencia.
 - **Andino Shield:** tu propia empresa de servicios de ciberseguridad (tycoon). Ganas licitaciones eligiendo los servicios que cada cliente necesita (SOC 24/7, pentest, PCI DSS, ISO 27001, nube, fraude, vCISO…), contratas personas de las 7 carreras, compras herramientas, atiendes incidentes y dilemas éticos, y creces del garaje a un SOC propio. Cada turno en el banco es un día hábil de la empresa.
+- **Archivo histórico:** 7 ataques reales contados como expedientes (Banco de Bangladesh, WannaCry, Equifax, Target, Capital One, SolarWinds, Colonial Pipeline), con cuestionario.
+- **Álbum MITRE ATT&CK:** 20 técnicas reales que se coleccionan al resolver tickets.
+- **Tickets con apariencia real:** llamada entrante tipo iPhone, bandeja de correo, chat de SMS y WhatsApp, cartel con QR, terminal y comandos reales de Linux y Windows con su salida.
+- **Escenas de cada ciudad** que cambian de día, atardecer y noche según tu hora.
 - **Diccionario del SOC** con más de 200 términos explicados con palabras sencillas y ejemplos: las palabras técnicas vienen subrayadas en cada ticket.
 - **Sin repeticiones:** el juego recuerda lo que ya viste y agrupa las preguntas que dicen lo mismo con otras palabras.
 - **46 logros** en bronce, plata y oro, **misiones diarias y semanales**, y un medidor de **preparación para Security+** por dominio del SY0-701.

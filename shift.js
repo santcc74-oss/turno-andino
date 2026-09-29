@@ -52,6 +52,7 @@
     return { type: "cve", id: "v" + i, why: c.why, items: shuffle(c.items.map((x, k) => Object.assign({ ok: k === c.c }, x))) };
   }
 
+  function cmdTicket(i) { const c = CMDS[i]; return { type: "cmd", id: "cm" + i, os: c.os, q: c.q, out: c.out, why: c.why, opts: shuffle(c.opts.map((t, k) => ({ t, ok: k === c.c }))) }; }
   function scanTicket(i) { return Object.assign({ type: "scan", id: "sc" + i }, SCANS[i]); }
   function riskTicket(i) { return Object.assign({ type: "risk", id: "rk" + i }, RISKS[i]); }
 
@@ -119,6 +120,7 @@
     if (type === "order") return orderTicket(ORDERS[+pf(tagged(ORDERS, tg).map((i) => "o" + i)).slice(1)]);
     if (type === "scan") return scanTicket(+pf(SCANS.map((_, i) => "sc" + i)).slice(2));
     if (type === "risk") return riskTicket(+pf(RISKS.map((_, i) => "rk" + i)).slice(2));
+    if (type === "cmd") return cmdTicket(+pf(tagged(CMDS, tg).map((i) => "cm" + i)).slice(2));
     if (type === "decode") return decodeTicket(city.code);
     if (type === "ports") return portsTicket();
     if (type === "english") return englishTicket(city);
@@ -140,6 +142,7 @@
     if (/^h\d+$/.test(id)) return HEADERS[+id.slice(1)] ? headerTicket(+id.slice(1)) : null;
     if (/^s\d+$/.test(id)) return SIEMQ[+id.slice(1)] ? siemTicket(+id.slice(1)) : null;
     if (/^v\d+$/.test(id)) return CVES[+id.slice(1)] ? cveTicket(+id.slice(1)) : null;
+    if (/^cm\d+$/.test(id)) return CMDS[+id.slice(2)] ? cmdTicket(+id.slice(2)) : null;
     if (/^sc\d+$/.test(id)) return SCANS[+id.slice(2)] ? scanTicket(+id.slice(2)) : null;
     if (/^rk\d+$/.test(id)) return RISKS[+id.slice(2)] ? riskTicket(+id.slice(2)) : null;
     if (/^cq-/.test(id)) { const t = quizTicket(id); if (t) { t.career = id.split("-")[1]; t.label = "Caso de especialidad"; } return t; }
@@ -260,6 +263,7 @@
     if (t.cama) { cama = ok ? "caught" : "missed"; S.cama[cama] += 1; }
     cur.res.push({ ok, type: t.type, id: t.id || null, label: shortLabel(t), cama });
     PROG.ticket(t, ok, fast, cama);
+    HIST.fromTicket(t, ok);
     cur.fb = { ok, gain, fast, hit, shielded, cama, career, extra: extra || "" };
     TA.save();
     const head = $(".p-head", play());
@@ -280,6 +284,7 @@
     if (t.type === "siem") return "SIEM: " + t.q;
     if (t.type === "cve") return "Priorizar vulnerabilidades";
     if (t.type === "scan") return "Escaneo: " + t.target;
+    if (t.type === "cmd") return "Terminal: " + t.q;
     if (t.type === "risk") return "Riesgo: " + t.text.slice(0, 70);
     return t.label || t.prompt;
   }
@@ -469,6 +474,19 @@
   }
   const sevOf = (v) => (v >= 9 ? ["crit", "Crítica"] : v >= 7 ? ["high", "Alta"] : v >= 4 ? ["med", "Media"] : ["low", "Baja"]);
 
+  function qrSvg(text) {
+    let h = 7; const cells = [];
+    for (const ch of text) h = (h * 31 + ch.charCodeAt(0)) >>> 0;
+    const N = 21, finder = (x, y) => (x < 7 && y < 7) || (x >= N - 7 && y < 7) || (x < 7 && y >= N - 7);
+    for (let y = 0; y < N; y++) for (let x = 0; x < N; x++) {
+      if (finder(x, y)) continue;
+      h ^= h << 13; h ^= h >>> 17; h ^= h << 5;
+      if ((h >>> 0) % 2) cells.push(`<rect x="${x}" y="${y}" width="1" height="1"/>`);
+    }
+    const f = (x, y) => `<rect x="${x}" y="${y}" width="7" height="7"/><rect x="${x + 1}" y="${y + 1}" width="5" height="5" fill="#fff"/><rect x="${x + 2}" y="${y + 2}" width="3" height="3"/>`;
+    return `<svg class="qr" viewBox="-1 -1 23 23" aria-label="Código QR del cartel"><rect x="-1" y="-1" width="23" height="23" fill="#fff"/><g fill="#111">${cells.join("")}${f(0, 0)}${f(N - 7, 0)}${f(0, N - 7)}</g></svg>`;
+  }
+
   const RISK_LV = (p, i) => (p * i >= 9 ? 3 : p * i >= 6 ? 2 : p * i >= 3 ? 1 : 0);
   const RISK_NAMES = ["Bajo", "Medio", "Alto", "Crítico"];
 
@@ -590,14 +608,29 @@
     },
 
     mail(root, t, done) {
-      root.innerHTML = `<p class="t-label">Reportado por un usuario · ${esc(t.ch)}${t.review ? ' <span class="tag">repaso</span>' : ""}${t.en ? ' <span class="tag">english</span>' : ""}</p>
+      const tagLine = `${t.review ? ' <span class="tag">repaso</span>' : ""}${t.en ? ' <span class="tag">english</span>' : ""}`;
+      const m = /^(.*?)\s*<([^>]+)>$/.exec(t.from || "");
+      const name = m ? m[1].replace(/"/g, "") : t.from, addr = m ? m[2] : "";
+      const initial = esc((name || "?").trim().charAt(0).toUpperCase());
+      const hue = [...(name || "")].reduce((a, ch) => a + ch.charCodeAt(0), 0) % 360;
+      let inner;
+      if (t.ch === "SMS" || t.ch === "WhatsApp") {
+        inner = `<div class="chat ${t.ch === "WhatsApp" ? "wa" : "sms"}">
+          <div class="chat-bar"><span class="mc-av" style="--h:${hue}">${initial}</span><div><b>${esc(name)}</b><small>${t.ch === "WhatsApp" ? "WhatsApp" : "Mensaje de texto"}</small></div></div>
+          <div class="chat-body"><p class="bubble">${GLOSS.link(esc(t.body))}<span class="mono">08:14</span></p></div></div>`;
+      } else if (t.ch === "QR") {
+        inner = `<div class="poster"><p class="poster-where small">${esc(t.from)}</p><h3>${esc(t.subj || "Escanea aquí")}</h3>${qrSvg(t.body)}<p>${GLOSS.link(esc(t.body))}</p></div>`;
+      } else {
+        inner = `<div class="mailclient">
+          <div class="mc-bar"><span>Bandeja de entrada</span><span class="mono">08:14</span></div>
+          <div class="mc-head"><span class="mc-av" style="--h:${hue}">${initial}</span><div><b>${esc(name)}</b>${addr ? `<small class="mono">${esc(addr)}</small>` : ""}<small>Para: mí</small></div></div>
+          ${t.subj ? `<h3 class="m-subj">${esc(t.subj)}</h3>` : ""}
+          <p class="m-body">${GLOSS.link(esc(t.body))}</p></div>`;
+      }
+      root.innerHTML = `<p class="t-label">Reportado por un usuario · ${esc(t.ch)}${tagLine}</p>
         <div class="swipe-zone">
           <span class="swipe-hint left">Legítimo</span><span class="swipe-hint right">Phishing</span>
-          <article class="ticket mail" id="mail-card" tabindex="0" aria-label="Mensaje a revisar">
-            <p class="m-from mono">${esc(t.from)}</p>
-            ${t.subj ? `<h3 class="m-subj">${esc(t.subj)}</h3>` : ""}
-            <p class="m-body">${GLOSS.link(esc(t.body))}</p>
-          </article>
+          <article class="ticket mail" id="mail-card" tabindex="0" aria-label="Mensaje a revisar">${inner}</article>
         </div>
         <p class="small center">Desliza a la derecha si es phishing, a la izquierda si es legítimo, o usa los botones.</p>
         <div class="duo">
@@ -634,24 +667,54 @@
       card.addEventListener("pointercancel", end);
     },
 
+    /* Llamada: primero la pantalla de llamada entrante; al contestar aparece la conversación. */
     call(root, t, done) {
-      root.innerHTML = `<article class="ticket call">
-        <p class="t-label">Llamada entrante${t.review ? ' <span class="tag">repaso</span>' : ""}</p>
-        <div class="caller"><span class="caller-pic">${ART.portrait(t.face || "stranger", t.face === "hernan" || t.face === "clienta" ? "worried" : "neutral")}<span class="ring" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M5 4h4l2 5-2.5 1.5a11 11 0 0 0 5 5L15 13l5 2v4a2 2 0 0 1-2 2A16 16 0 0 1 3 6a2 2 0 0 1 2-2z"/></svg></span></span>
-          <div><b>${esc(t.who)}</b><small class="mono">${esc(t.from)}</small></div></div>
-        <blockquote class="say">${GLOSS.link(esc(t.say))}</blockquote>
-        <p class="t-sub">¿Qué haces?</p>
-      </article>`;
-      options(root, t.opts, done);
+      const pic = ART.portrait(t.face || "stranger", t.face === "hernan" || t.face === "clienta" ? "worried" : "neutral");
+      root.innerHTML = `<div class="phone" id="phone">
+          <p class="ph-top">Llamada entrante${t.review ? ' · <span class="tag">repaso</span>' : ""}</p>
+          <div class="ph-pic">${pic}</div>
+          <h3 class="ph-name">${esc(t.who)}</h3>
+          <p class="ph-num mono">${esc(t.from)}</p>
+          <div class="ph-slide" id="ph-slide"><button class="ph-knob" id="ph-knob" aria-label="Contestar la llamada"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 4h4l2 5-2.5 1.5a11 11 0 0 0 5 5L15 13l5 2v4a2 2 0 0 1-2 2A16 16 0 0 1 3 6a2 2 0 0 1 2-2z"/></svg></button><span>desliza para contestar</span></div>
+        </div>`;
+      const answer = () => {
+        root.innerHTML = `<article class="ticket call">
+          <p class="t-label">En llamada · <span class="mono">00:0${1 + TA.rand(8)}</span></p>
+          <div class="caller"><span class="caller-pic">${pic}</span><div><b>${esc(t.who)}</b><small class="mono">${esc(t.from)}</small></div></div>
+          <blockquote class="say">${GLOSS.link(esc(t.say))}</blockquote>
+          <p class="t-sub">¿Qué haces?</p>
+        </article>`;
+        options(root, t.opts, done);
+      };
+      const knob = $("#ph-knob"), track = $("#ph-slide");
+      let x0 = null, dx = 0;
+      knob.onclick = () => { if (Math.abs(dx) < 5) answer(); };
+      knob.addEventListener("pointerdown", (e) => { x0 = e.clientX; dx = 0; knob.setPointerCapture(e.pointerId); });
+      knob.addEventListener("pointermove", (e) => {
+        if (x0 === null) return;
+        const max = track.clientWidth - knob.offsetWidth - 8;
+        dx = Math.max(0, Math.min(max, e.clientX - x0));
+        knob.style.transform = `translateX(${dx}px)`;
+      });
+      knob.addEventListener("pointerup", () => {
+        if (x0 === null) return;
+        const max = track.clientWidth - knob.offsetWidth - 8;
+        x0 = null;
+        if (dx > max * 0.7) answer(); else { knob.style.transform = ""; dx = dx > 5 ? dx : 0; setTimeout(() => { dx = 0; }, 0); }
+      });
     },
 
+    /* Log en una terminal: las líneas aparecen una tras otra. */
     log(root, t, done) {
+      const file = /auth/.test(t.src) ? "/var/log/auth.log" : /cron/.test(t.src) ? "/var/log/syslog" : /Windows/.test(t.src) ? "Security.evtx" : "eventos.log";
       root.innerHTML = `<article class="ticket">
         <p class="t-label">Alerta del SIEM${t.review ? ' <span class="tag">repaso</span>' : ""}</p>
         <h3 class="t-q">Toca la línea sospechosa</h3>
         <p class="small mono">${esc(t.src)}</p>
       </article>
-      <div class="log" role="list">${t.lines.map((l, i) => `<button class="log-line mono" role="listitem" data-i="${i}">${esc(l)}</button>`).join("")}</div>`;
+      <div class="term"><div class="term-bar"><i></i><i></i><i></i><span class="mono">analista@soc-andino</span></div>
+        <p class="term-cmd mono">$ tail -n ${t.lines.length} ${esc(file)}</p>
+        <div class="log" role="list">${t.lines.map((l, i) => `<button class="log-line mono typed" style="--d:${i}" role="listitem" data-i="${i}">${esc(l)}</button>`).join("")}</div></div>`;
       const btns = [...root.querySelectorAll(".log-line")];
       btns.forEach((b) => b.onclick = () => {
         btns.forEach((x) => x.disabled = true);
@@ -660,6 +723,27 @@
         if (i !== t.bad) b.classList.add("wrong");
         done(i === t.bad);
       });
+    },
+
+    /* Comandos reales: elige el comando y mira lo que devuelve. */
+    cmd(root, t, done) {
+      root.innerHTML = `<article class="ticket">
+        <p class="t-label">Terminal · ${esc(t.os)}${t.review ? ' <span class="tag">repaso</span>' : ""}</p>
+        <h3 class="t-q">${GLOSS.link(esc(t.q))}</h3>
+        <p class="small">Elige el comando que responde la pregunta.</p>
+      </article>`;
+      options(root, t.opts, (ok) => {
+        const right = t.opts.find((o) => o.ok).t;
+        const term = document.createElement("div");
+        term.className = "term";
+        term.innerHTML = `<div class="term-bar"><i></i><i></i><i></i><span class="mono">${t.os === "Windows" ? "PS C:\\SOC" : "analista@rpt-01"}</span></div>
+          <p class="term-cmd mono">${t.os === "Windows" ? "PS&gt;" : "$"} ${esc(right)}</p>
+          <div class="term-out">${t.out.map((l, i) => `<p class="mono typed" style="--d:${i}">${esc(l) || "&nbsp;"}</p>`).join("")}</div>`;
+        root.appendChild(term);
+        done(ok);
+        /* La hoja de retroalimentación tapa la parte baja: se sube la vista hasta la terminal. */
+        setTimeout(() => { const p = play(); p.scrollTop = Math.max(0, term.offsetTop - 70); }, 60);
+      }, "code-opts");
     },
 
     decode(root, t, done) {

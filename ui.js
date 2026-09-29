@@ -55,6 +55,7 @@
       </section>` : ""}
 
       <section class="pass" aria-label="Pase de abordar de tu próximo turno">
+        <div class="pass-scene">${SCENE.scene(city.code, { label: "Paisaje de " + city.city })}<span class="scene-tag mono">${esc(city.city)} · ${{ day: "de día", dusk: "atardecer", night: "de noche" }[SCENE.phase()]}</span></div>
         <div class="pass-main">
           <p class="eyebrow">Pase de turno · Banco Andino</p>
           <div class="route">
@@ -151,6 +152,7 @@
       </section>
       <div class="map-wrap">${ART.map(states, sel.code)}</div>
       <section class="city-card" aria-live="polite">
+        <div class="cc-scene">${SCENE.scene(sel.code, { label: "Paisaje de " + sel.city })}</div>
         <div class="cc-top"><span class="iata sm">${sel.code}</span><div class="cc-name"><b>${esc(sel.city)}, ${esc(sel.country)}</b><small>${esc(phaseName(sel.phase))} · Puerta ${sel.gate}</small></div>${chip(sel.code)}</div>
         <p class="small">${esc(sel.intro)}</p>
         <div class="cc-prog"><span class="small">Turnos buenos y examen</span><span class="dots">${dots}</span></div>
@@ -194,12 +196,12 @@
 
   /* ——— Pasaporte: sellos, logros, carrera y expediente ——— */
   let passTab = "sellos";
-  const PASS_TABS = [["sellos", "Sellos"], ["logros", "Logros"], ["carrera", "Carrera"], ["cama", "Camaleón"]];
+  const PASS_TABS = [["sellos", "Sellos"], ["logros", "Logros"], ["carrera", "Carrera"], ["archivo", "Archivo"], ["cama", "Camaleón"]];
   function pasaporte() {
     const S = TA.S, ri = TA.rankIndex(S.xp);
     const nStamps = Object.keys(S.stamps).length;
     const ach = PROG.achievements(), nGot = ach.filter((a) => a.got).length;
-    const tabs = `<div class="seg" role="tablist">${PASS_TABS.map(([k, l]) => `<button role="tab" data-tab="${k}" aria-selected="${passTab === k}">${l}</button>`).join("")}</div>`;
+    const tabs = `<div class="seg seg5" role="tablist">${PASS_TABS.map(([k, l]) => `<button role="tab" data-tab="${k}" aria-selected="${passTab === k}">${l}</button>`).join("")}</div>`;
     let body = "";
     if (passTab === "sellos") {
       const stamps = CITIES.map((c, i) => S.stamps[c.code]
@@ -217,6 +219,8 @@
             <div><b>${hidden ? "Logro secreto" : esc(a.name)}</b><small>${hidden ? "Sigue jugando para descubrirlo." : esc(a.desc)}</small>
             ${a.got ? `<span class="small mono">${a.got}</span>` : hidden ? "" : `<div class="bar sm"><i style="width:${(a.cur / a.goal) * 100}%"></i></div><span class="small mono">${a.cur}/${a.goal}</span>`}</div>
           </li>`; }).join("")}</ul></section>`).join("")}`;
+    } else if (passTab === "archivo") {
+      body = HIST.view();
     } else if (passTab === "carrera") {
       const cur = window.CAREER && CAREER.current();
       let spec = "";
@@ -330,6 +334,7 @@
     on("h-resume", () => PLAY.resume());
     on("h-flash", () => PLAY.flash());
     on("h-co", () => go("empresa"));
+    if (view === "pasaporte" && passTab === "archivo") HIST.wire(() => go("pasaporte"));
     if (view === "empresa") TYC.wire(() => { const y = window.scrollY; go("empresa"); window.scrollTo(0, y); });
     on("h-pick", () => CAREER.picker({ onClose: () => go(view) }));
     on("h-career", () => { passTab = "carrera"; go("pasaporte"); });

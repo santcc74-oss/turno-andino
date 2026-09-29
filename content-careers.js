@@ -26,7 +26,7 @@ window.CAREERS = [
     day: "Coordinas la respuesta, aíslas equipos, haces copias forenses, armas la línea de tiempo del ataque y escribes el informe.",
     levels: ["Respondedor de incidentes", "Analista forense", "Líder de respuesta", "Jefe de DFIR"],
     certs: [["GCIH", "GIAC"], ["GCFA", "GIAC"]],
-    special: [{ type: "order", tag: "dfir" }, { type: "log" }, { type: "siem" }],
+    special: [{ type: "order", tag: "dfir" }, { type: "log" }, { type: "cmd" }, { type: "siem" }],
     q: [
       { d: 4, q: "¿Por qué se hace una copia forense bit a bit del disco antes de analizarlo?", a: ["Para trabajar sobre la copia sin alterar la evidencia original", "Porque el disco original se borra al conectarlo al laboratorio", "Para que el análisis sea más rápido que en el disco real", "Porque la ley exige destruir el disco después del análisis"], c: 0, w: "El original se guarda intacto y se prueba con hash que la copia es idéntica." },
       { d: 4, q: "Un bloqueador de escritura sirve para:", a: ["Impedir que el atacante siga cifrando archivos", "Leer un disco sin que el equipo del analista escriba en él", "Bloquear los puertos USB de todos los empleados", "Evitar que se escriban logs durante el incidente"], c: 1, w: "Solo conectar un disco a Windows puede modificarlo; el bloqueador lo impide." },
