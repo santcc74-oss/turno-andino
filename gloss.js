@@ -49,7 +49,7 @@
   function chips(plain, max) {
     const ks = keysIn(plain).slice(0, max || 6);
     if (!ks.length) return "";
-    return `<div class="kw"><small>Palabras de este ticket · toca para entenderlas</small><div>${ks.map((k) => `<button type="button" class="gl-chip" data-k="${k}">${esc(G[k].es)}</button>`).join("")}</div></div>`;
+    return `<div class="kw"><small>Palabras clave · toca para entenderlas</small><div>${ks.map((k) => `<button type="button" class="gl-chip" data-k="${k}">${esc(G[k].es)}</button>`).join("")}</div></div>`;
   }
 
   function open(k) {

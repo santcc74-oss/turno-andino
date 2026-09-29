@@ -367,12 +367,13 @@
     if (stars >= 2) prog.good += 1;
     const examReady = prog.good >= TA.GOOD_FOR_STAMP && !S.stamps[city.code];
     TA.touchStreak();
+    const coDay = TYC.founded() ? TYC.nextDay() : null;
     PROG.shift({ stars, health: cur.health, perfect: n > 0 && good === n, camaCaught: cur.res.filter((r) => r.cama === "caught").length, shieldUsed: TA.has("llave") && !cur.shield });
     const after = TA.rankInfo(S.xp);
     const res = cur.res;
     S.cur = null;
     TA.save();
-    showResult({ city, stars, acc, xp, pay, res, promo: after.i > before.i ? after : null, examReady, health: cur.health, prog, careerUp: cur.careerUp || null });
+    showResult({ city, stars, acc, xp, pay, res, promo: after.i > before.i ? after : null, examReady, health: cur.health, prog, careerUp: cur.careerUp || null, coDay });
   }
 
   function starsSvg(n) {
@@ -397,6 +398,7 @@
       </dl>
       ${r.examReady ? `<div class="banner exam-b"><p class="eyebrow">Examen de sede desbloqueado</p><h3>Sala de espera · ${esc(r.city.city)}</h3><p>${EXAM_N} preguntas de la sede. Con ${EXAM_PASS} aciertos ganas el sello y abres la siguiente ruta.</p><button class="btn primary wide" id="r-exam">Presentar el examen</button></div>`
         : !TA.S.stamps[r.city.code] ? `<p class="small center">Te ${need === 1 ? "falta 1 turno" : "faltan " + need + " turnos"} de 2 estrellas o más para desbloquear el examen de ${esc(r.city.city)}.</p>` : ""}
+      ${r.coDay ? TYC.resultCard(r.coDay) : ""}
       ${wrong.length ? `<div class="review"><p class="eyebrow">Para repasar · vuelven en tus próximos turnos</p><ul>${wrong.map((w) => `<li>${fmt(w.label)}</li>`).join("")}</ul></div>` : ""}
       <div class="stack">
         <button class="btn primary wide" id="r-again">Otro turno en ${esc(r.city.city)}</button>
@@ -406,6 +408,7 @@
     $("#r-again").onclick = () => start(r.city.code);
     $("#r-home").onclick = close;
     if ($("#r-exam")) $("#r-exam").onclick = () => exam(r.city.code);
+    if ($("#r-co")) $("#r-co").onclick = () => { close(); UI.go("empresa"); };
     play().scrollTop = 0;
     const afterPromo = () => CAREER.ensureOffer();
     if (r.promo) setTimeout(() => ART.promoCeremony(r.promo, afterPromo), ART.reduced() ? 0 : 900);

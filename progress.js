@@ -151,10 +151,12 @@
   }
 
   /* ——— Logros ——— */
-  const G = { career: "Carrera", precision: "Precisión", cama: "El Camaleón", craft: "Oficio", life: "Vida", travel: "Viajero", missions: "Misiones", secret: "Secretos" };
+  const G = { company: "Andino Shield", career: "Carrera", precision: "Precisión", cama: "El Camaleón", craft: "Oficio", life: "Vida", travel: "Viajero", missions: "Misiones", secret: "Secretos" };
   const REWARD = { bronce: 30, plata: 80, oro: 200 };
   const rank = () => TA.rankIndex(S().xp);
   const stamps = () => Object.keys(S().stamps).length;
+  const co = (k) => (S().co ? S().co.stats[k] || 0 : 0);
+  const coStage = () => (S().co && window.TYC ? TYC.stage().i : 0);
   const careerLevels = () => Object.values(S().careers || {}).map((xp) => (window.CAREER ? CAREER.levelOf(xp) : 0));
   const careerTop = () => Math.max(0, ...careerLevels());
   const careerCount = (lvl) => careerLevels().filter((l) => l >= lvl).length;
@@ -209,6 +211,14 @@
     A("m-20", "missions", "plata", "Profesional", "Cobra 20 misiones diarias.", () => [val("missions"), 20]),
     A("m-w", "missions", "plata", "Semana redonda", "Cobra una misión semanal.", () => [val("weeklies"), 1]),
 
+    A("co-found", "company", "bronce", "Emprendedor", "Funda Andino Shield.", () => [S().co ? 1 : 0, 1]),
+    A("co-client", "company", "bronce", "Primer cliente", "Gana tu primera licitación.", () => [co("won"), 1]),
+    A("co-staff5", "company", "plata", "Nómina de cinco", "Ten 5 empleados en tu empresa.", () => [S().co ? S().co.staff.length : 0, 5]),
+    A("co-pyme", "company", "plata", "Ya somos pyme", "Llega a la etapa Pyme (₳ 4.000 de ingreso mensual).", () => [coStage(), 2]),
+    A("co-latam", "company", "oro", "Líder en Latinoamérica", "Llega a la última etapa de Andino Shield.", () => [coStage(), 4]),
+    A("co-ethic", "company", "plata", "Con principios", "Toma la decisión correcta en 3 dilemas éticos.", () => [co("ethic"), 3]),
+    A("co-ir", "company", "plata", "Respuesta de libro", "Maneja bien 10 incidentes de tu empresa.", () => [co("ok"), 10]),
+    A("co-branch", "company", "oro", "Sucursal", "Abre una sucursal en otra ciudad.", () => [S().co ? Object.keys(S().co.branches).length : 0, 1]),
     A("k-pick", "career", "bronce", "Especialista", "Elige tu especialidad.", () => [S().career ? 1 : 0, 1]),
     A("k-lvl2", "career", "plata", "Te lo tomas en serio", "Llega al segundo cargo de tu especialidad.", () => [careerTop(), 1]),
     A("k-lvl4", "career", "oro", "Referente del área", "Llega al último cargo de una especialidad.", () => [careerTop(), 3]),
@@ -294,6 +304,7 @@
     life: '<path d="M-5 -2h8v4a4 4 0 0 1 -4 4h0a4 4 0 0 1 -4 -4z M3 0h2a2 2 0 0 1 0 4h-2"/>',
     travel: '<path d="M-7 1 l5 -.8 2.6 -5 h1.4 l-1.3 5 4 -.3 1.3 -1.6 h1 l-.7 2.7 .7 2.7 h-1 l-1.3 -1.6 -4 -.3 1.3 5 h-1.4 l-2.6 -5 -5 -.8z"/>',
     missions: '<path d="M-6 0 l4 4 8 -8"/>',
+    company: '<path d="M-6 6V-2l6 -4 6 4v8 M-2 6v-4h4v4"/>',
     secret: '<path d="M-2.5 -2.5 a2.5 2.5 0 1 1 3 2.4 v1.6 M.5 4.5v.4"/>',
   };
   function medal(a, size) {

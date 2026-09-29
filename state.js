@@ -12,7 +12,7 @@
     streak: { cur: 0, best: 0, last: "", freezeWeek: -1 },
     flashBest: 0, cur: null, exam: null, mapSeen: 1,
     st: {}, dom: {}, ach: {}, daily: null, weekly: null,
-    seenN: {}, career: null, careers: {}, careerOffered: false,
+    seenN: {}, career: null, careers: {}, careerOffered: false, co: null,
   });
 
   function merge(raw) {

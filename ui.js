@@ -75,6 +75,7 @@
         </div>
       </section>
 
+      ${TYC.homeCard()}
       ${missionsCard()}
 
       <section class="duo-cards">
@@ -312,7 +313,7 @@
     </section>`;
   }
 
-  const VIEWS = { hoy, rutas, vida, pasaporte, perfil };
+  const VIEWS = { hoy, rutas, vida, pasaporte, perfil, empresa: () => TYC.view() };
 
   function go(name) {
     view = VIEWS[name] ? name : "hoy";
@@ -328,6 +329,8 @@
     on("h-start", () => PLAY.start());
     on("h-resume", () => PLAY.resume());
     on("h-flash", () => PLAY.flash());
+    on("h-co", () => go("empresa"));
+    if (view === "empresa") TYC.wire(() => { const y = window.scrollY; go("empresa"); window.scrollTo(0, y); });
     on("h-pick", () => CAREER.picker({ onClose: () => go(view) }));
     on("h-career", () => { passTab = "carrera"; go("pasaporte"); });
     on("pp-switch", () => CAREER.picker({ onClose: () => go(view) }));
@@ -337,7 +340,7 @@
       if (r) PROG.toast({ kind: "mission", title: "Cobraste la misión", text: "+" + TA.money(r.money) + " · +" + r.xp + " rep.", sub: r.bonus ? "Incluye el bono del día" : "" });
       go("hoy");
     });
-    document.querySelectorAll(".seg button").forEach((b) => b.onclick = () => { passTab = b.dataset.tab; go("pasaporte"); });
+    document.querySelectorAll(".seg button[data-tab]").forEach((b) => b.onclick = () => { passTab = b.dataset.tab; go("pasaporte"); });
     on("h-exam", () => PLAY.exam(TA.S.city));
     on("h-exam-resume", () => PLAY.exam(TA.S.exam.city));
     on("rt-exam", () => PLAY.exam(TA.S.city));
