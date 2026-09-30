@@ -7,6 +7,8 @@ window.TYPE_NEEDS = {
   decode: ["m01"], ports: ["m08"], header: ["m16"], siem: ["m19"], cve: ["m18"],
   log: { any: ["m02", "m06"] }, cmd: { any: ["m02", "m04"] }, code: { any: ["m05", "m11", "m12", "m17", "m25"] },
   order: { any: ["m08", "m16", "m18", "m20", "m21", "m22", "m26"] }, scan: ["m09"], risk: ["m13"],
+  /* Juegos interactivos */
+  spot: [], firewall: ["m08"], caesar: ["m14"], password: ["m15"], triage: ["m19"], zones: ["m07"],
 };
 
 /* Temas que necesita cada caso concreto (por su id o su título). */
@@ -81,4 +83,25 @@ window.PRIMERS = {
   risk: { title: "Matriz de riesgo", intro: "Un riesgo se mide cruzando dos preguntas: ¿qué tan probable es? y ¿qué tan grave sería?",
     points: ["Probabilidad alta: ya está pasando en la región o no hay controles.", "Impacto alto: afecta dinero, datos de clientes o servicios críticos.", "Los controles existentes (MFA, cifrado, aislamiento) bajan la probabilidad o el impacto."],
     how: "Toca la casilla donde ubicarías el riesgo." },
+  spot: { title: "Caza de señales", intro: "Un mensaje de phishing casi nunca tiene una sola pista: tiene varias. Aquí las buscas tú, una por una.",
+    points: ["El remitente: un dominio parecido pero distinto, o un correo personal.", "La urgencia: plazos cortos, miedo, «no se lo digas a nadie».", "El enlace: ¿lleva al dominio oficial?", "Lo que piden: claves, códigos SMS, datos de tarjeta, dinero."],
+    example: "«bancoandino-verificacion.com» no es «bancoandino.com.co»: basta una palabra de más para que sea otro dueño.",
+    how: "Toca cada parte sospechosa del mensaje. Cuando creas que ya las tienes todas, toca «Terminé de revisar»." },
+  firewall: { title: "Firewall en vivo", intro: "Un firewall es el portero de la red: mira cada paquete (su puerto y su origen) y lo deja pasar o lo bloquea según una lista de reglas llamada política.",
+    points: ["El puerto dice a qué servicio va: 443 es HTTPS, 22 es SSH, 3389 es escritorio remoto.", "El origen dice de dónde viene: internet o la VPN interna (10.8.x.x).", "La regla final siempre es «bloquear todo lo demás»: lo que no está permitido, no pasa."],
+    example: "Un 3389 (RDP) desde internet se bloquea: es la puerta favorita del ransomware.",
+    how: "Los paquetes cruzan la pantalla hacia el servidor. Tócalos para bloquear los que la política no permite; deja pasar los demás." },
+  caesar: { title: "Rueda del César", intro: "El cifrado César corre cada letra un número fijo de posiciones: con desplazamiento 3, la A se vuelve D. Es el cifrado más viejo que se conoce.",
+    points: ["Solo hay 26 posiciones posibles, así que se rompe probándolas todas (fuerza bruta).", "Por eso hoy se usa cifrado moderno como AES, que tiene más combinaciones que átomos en el universo."],
+    example: "«HO FDPDOHRQ» con desplazamiento 3 es «EL CAMALEON».",
+    how: "Gira la rueda con las flechas o la barra hasta que el mensaje se lea en español, y envíalo." },
+  password: { title: "Clave fuerte", intro: "Un atacante que roba una base de claves prueba miles de millones de combinaciones por segundo. Lo que más lo frena es la longitud.",
+    points: ["Cada carácter extra multiplica las combinaciones.", "Palabras obvias (el banco, tu ciudad, el año, «123456») se prueban primero.", "Una frase de varias palabras al azar es larga y fácil de recordar.", "Aun así: usa un gestor de contraseñas y MFA."],
+    how: "Escribe una clave de práctica (nunca una real) y mira cuánto tardaría un atacante. Gana cuando cumpla todas las casillas." },
+  triage: { title: "Triaje contra reloj", intro: "En un SOC llegan cientos de alertas. Triaje es decidir cuál se atiende primero, como en urgencias de un hospital.",
+    points: ["P1 · Crítica: daño activo ahora en algo importante (dinero saliendo, ransomware).", "P2 · Alta: probable compromiso que hay que investigar ya.", "P3 · Media: sospechoso pero contenido o sin víctimas.", "P4 · Baja: informativo, el control funcionó."],
+    how: "Lee cada alerta y toca su prioridad antes de que se acabe la barra. Una prioridad de diferencia vale medio punto." },
+  zones: { title: "Segmenta la red", intro: "Segmentar es dividir la red en zonas separadas por firewalls, para que si un atacante entra a una, no llegue a todo lo demás.",
+    points: ["DMZ: lo que da la cara a internet (web, correo de salida).", "Red interna: empleados y sistemas internos, nunca expuestos.", "Zona de tarjetas (CDE): todo lo que toca datos de tarjetas, aislado por PCI DSS.", "Laboratorio aislado: pruebas y malware, sin conexión a la red real."],
+    how: "Toca un sistema y luego la zona donde debe vivir." },
 };

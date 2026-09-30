@@ -23,7 +23,7 @@
     m22: 5, m23: 5, m26: 5, m27: 5,
   };
   const DOM_OF_EXTRA = [1, 2, 1, 1, 3, 4, 4, 2, 5, 4, 4, 5, 2, 3, 3];
-  const DOM_OF_TYPE = { mail: 2, call: 2, header: 2, code: 2, log: 4, siem: 4, cve: 4, order: 4, decode: 1, ports: 3, scan: 4, risk: 5, cmd: 4 };
+  const DOM_OF_TYPE = { mail: 2, call: 2, header: 2, code: 2, log: 4, siem: 4, cve: 4, order: 4, decode: 1, ports: 3, scan: 4, risk: 5, cmd: 4, spot: 2, firewall: 3, caesar: 1, password: 4, triage: 4, zones: 3 };
   function domOf(t) {
     const id = t.id || "";
     let m;
@@ -75,6 +75,7 @@
     { id: "gloss", t: "Aprende 3 palabras nuevas del diccionario", goal: 3, on: "gloss" },
     { id: "learn", t: "Estudia un tema nuevo en Capacitación", goal: 1, on: "learn", needs: "unlearned" },
     { id: "cmd", t: "Elige bien 2 comandos en la terminal", goal: 2, on: "ticket", needs: "cmd", when: (e) => e.type === "cmd" && e.ok },
+    { id: "games", t: "Gana 2 juegos (turno o Sala de juegos)", goal: 2, on: "ticket", when: (e) => GAME_TYPES.includes(e.type) && e.ok },
   ];
   const WEEKLY = [
     { id: "w-turnos", t: "Completa 10 turnos esta semana", goal: 10, on: "shift" },
@@ -163,6 +164,7 @@
   const careerLevels = () => Object.values(S().careers || {}).map((xp) => (window.CAREER ? CAREER.levelOf(xp) : 0));
   const careerTop = () => Math.max(0, ...careerLevels());
   const careerCount = (lvl) => careerLevels().filter((l) => l >= lvl).length;
+  const GAME_TYPES = ["spot", "firewall", "caesar", "password", "triage", "zones"];
   const A = (id, g, tier, name, desc, prog, secret) => ({ id, g, tier, name, desc, prog, secret: !!secret });
   const ACH = [
     A("a-turno1", "career", "bronce", "Primer turno", "Termina tu primer turno.", () => [S().shifts, 1]),
@@ -237,6 +239,10 @@
     A("k-pick", "career", "bronce", "Especialista", "Elige tu especialidad.", () => [S().career ? 1 : 0, 1]),
     A("k-lvl2", "career", "plata", "Te lo tomas en serio", "Llega al segundo cargo de tu especialidad.", () => [careerTop(), 1]),
     A("k-lvl4", "career", "oro", "Referente del área", "Llega al último cargo de una especialidad.", () => [careerTop(), 3]),
+    A("j-spot", "craft", "bronce", "Detector de señales", "Gana 5 partidas de Caza de señales.", () => [val("ok_spot"), 5]),
+    A("j-fw", "craft", "plata", "Portero de la red", "Gana 5 partidas de Firewall en vivo.", () => [val("ok_firewall"), 5]),
+    A("j-triage", "craft", "plata", "Cabeza fría", "Gana 5 partidas de Triaje contra reloj.", () => [val("ok_triage"), 5]),
+    A("j-all", "craft", "oro", "Jugador completo", "Gana al menos una vez cada uno de los 6 juegos.", () => [GAME_TYPES.filter((g) => val("ok_" + g) > 0).length, 6]),
     A("k-multi", "career", "plata", "Polivalente", "Llega al segundo cargo en 3 especialidades distintas.", () => [careerCount(1), 3]),
     A("g-10", "craft", "bronce", "Curioso", "Consulta 10 palabras del diccionario.", () => [Object.keys(st().words || {}).length, 10]),
     A("g-50", "craft", "plata", "Diccionario andante", "Consulta 50 palabras del diccionario.", () => [Object.keys(st().words || {}).length, 50]),

@@ -149,6 +149,7 @@
     if (type === "header") return byPrefix(HEADERS, "h", headerTicket, false);
     if (type === "siem") return byPrefix(SIEMQ, "s", siemTicket, true);
     if (type === "cve") return byPrefix(CVES, "v", cveTicket, false);
+    if (GAMES[type]) return GAMES[type].make(city, used);
     return null;
   }
   function ticketFromId(id) {
@@ -162,6 +163,7 @@
     if (/^cm\d+$/.test(id)) return CMDS[+id.slice(2)] ? cmdTicket(+id.slice(2)) : null;
     if (/^sc\d+$/.test(id)) return SCANS[+id.slice(2)] ? scanTicket(+id.slice(2)) : null;
     if (/^rk\d+$/.test(id)) return RISKS[+id.slice(2)] ? riskTicket(+id.slice(2)) : null;
+    if (/^sp\d+$/.test(id)) return SPOTS[+id.slice(2)] ? Object.assign({ type: "spot", id }, SPOTS[+id.slice(2)]) : null;
     if (/^cq-/.test(id)) { const t = quizTicket(id); if (t) { t.career = id.split("-")[1]; t.label = "Caso de especialidad"; } return t; }
     return quizTicket(id);
   }
@@ -245,14 +247,21 @@
     $("#p-pause").onclick = pause;
     const body = $("#p-body");
     if (!cur.fb && LEARN.needsPrimer(t)) { stopTimer(); LEARN.primer(body, t, () => { cur.elapsed = 0; render(); }); return; }
-    const R = RENDER[t.type];
-    R(body, t, (ok, extra) => resolve(ok, extra));
+    /* Un juego ya resuelto no se vuelve a jugar al reabrir: se muestra solo su título. */
+    if (GAMES[t.type] && cur.fb) body.innerHTML = `<article class="ticket"><p class="t-label">${esc(GAMES[t.type].label(t))}</p><h3 class="t-q">Partida terminada</h3></article>`;
+    else renderGame(body, t, (ok, extra) => resolve(ok, extra));
     if (t.career) { const l = body.querySelector(".t-label"); if (l) l.insertAdjacentHTML("afterbegin", '<span class="tag car-tag">Especialidad</span> '); }
     if (cur.fb) showFeedback(cur.fb);
     else startTimer(t);
   }
 
-  function slaFor(t) { return TA.slaSeconds() * 1000 * (t.type === "match" || t.type === "order" ? 1.6 : 1); }
+  const SLOW = { match: 1.6, order: 1.6, spot: 1.6, zones: 1.6, caesar: 1.4, password: 2, firewall: 2.2, triage: 3 };
+  function slaFor(t) { return TA.slaSeconds() * 1000 * (SLOW[t.type] || 1); }
+  function renderGame(root, t, done) {
+    let over = false;
+    const once = (ok, extra) => { if (over || !root.isConnected) return; over = true; done(ok, extra); };
+    (RENDER[t.type] || GAMES[t.type].render)(root, t, once);
+  }
   function startTimer(t) {
     stopTimer();
     const cur = TA.S.cur, total = slaFor(t);
@@ -308,6 +317,7 @@
     if (t.type === "scan") return "Escaneo: " + t.target;
     if (t.type === "cmd") return "Terminal: " + t.q;
     if (t.type === "risk") return "Riesgo: " + t.text.slice(0, 70);
+    if (GAMES[t.type]) return GAMES[t.type].label(t);
     return t.label || t.prompt;
   }
 
@@ -1003,5 +1013,5 @@
     } else if (promoted) ART.promoCeremony(after);
   }
 
-  window.PLAY = { start, resume: open, flash, exam, EXAM_N, EXAM_PASS };
+  window.PLAY = { start, resume: open, flash, exam, EXAM_N, EXAM_PASS, renderGame, makeGame: (type) => makeOfType(type, TA.cityByCode(TA.S.city), new Set()) };
 })();

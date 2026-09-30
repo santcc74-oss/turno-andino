@@ -82,6 +82,12 @@
       ${TYC.homeCard()}
       ${missionsCard()}
 
+      <button class="arcade-card" id="h-arcade">
+        <svg viewBox="0 0 48 32" aria-hidden="true"><rect x="2" y="4" width="44" height="24" rx="12"/><path d="M13 12v8M9 16h8"/><circle cx="33" cy="13" r="2.2"/><circle cx="38" cy="18" r="2.2"/></svg>
+        <span><span class="eyebrow">Sala de juegos</span><b>Juega sin turno</b>
+        <small>${Object.keys(GAMES).filter((g) => LEARN.typeAllowed(g)).length} de ${Object.keys(GAMES).length} juegos nuevos abiertos · firewall, triaje, cifrado y más</small></span>
+      </button>
+
       <section class="duo-cards">
         <button class="card-btn" id="h-flash" ${TA.S.learned && Object.keys(TA.S.learned).length ? "" : "disabled"}>
           <span class="eyebrow">60 segundos</span><b>Repaso relámpago</b>
@@ -324,6 +330,7 @@
     on("h-start", () => PLAY.start());
     on("h-resume", () => PLAY.resume());
     on("h-flash", () => PLAY.flash());
+    on("h-arcade", () => ARCADE.open(() => go(view)));
     on("h-aula", () => LEARN.aula(TA.S.city, () => go(view)));
     on("h-lesson", () => LEARN.lesson(document.getElementById("h-lesson").dataset.mod, () => go(view)));
     on("h-learn-first", () => LEARN.lesson(LEARN.cityProgress(TA.S.city).next, () => go(view)));

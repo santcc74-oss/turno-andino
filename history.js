@@ -27,6 +27,8 @@
     if (t.type === "log") return LOG_TECH[t.id] || null;
     if (t.type === "cmd") return CMD_TECH[t.id] || null;
     if (t.type === "scan") return "T1046";
+    if (t.type === "spot") return "T1566";
+    if (t.type === "firewall") return "T1133";
     if (t.type === "code") return /SQL|ping|eval|IDOR|cuenta/i.test(t.title + " " + t.why) ? "T1190" : null;
     if (t.type === "cve") { const x = (t.items || []).find((i) => i.ok); if (!x) return null; return /EternalBlue|Zerologon|PrintNightmare/.test(x.name) ? "T1210" : "T1190"; }
     if (t.type === "order") return /ransomware/i.test(t.title) ? "T1204.002" : /phishing/i.test(t.title) ? "T1566" : null;
