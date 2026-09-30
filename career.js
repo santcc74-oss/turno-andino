@@ -39,11 +39,15 @@
     const c = current();
     if (!c) return [];
     const out = [];
-    const ids = c.q.map((_, i) => "cq-" + c.id + "-" + i);
-    const q = make.quizById(TA.pickFresh(ids, make.usedConcepts));
-    if (q) { q.career = c.id; q.label = "Caso de especialidad"; out.push(q); }
-    const sp = pick(c.special);
-    const t = make.ofType(sp.type, sp.tag);
+    /* Los casos de especialidad salen cuando ya estudiaste algún tema de la inducción de tu carrera. */
+    if ((CAREER_MODS[c.id] || []).some(LEARN.learned)) {
+      const ids = c.q.map((_, i) => "cq-" + c.id + "-" + i);
+      const q = make.quizById(TA.pickFresh(ids, make.usedConcepts));
+      if (q) { q.career = c.id; q.label = "Caso de especialidad"; out.push(q); }
+    }
+    const specials = c.special.filter((sp) => LEARN.typeAllowed(sp.type));
+    const sp = specials.length ? pick(specials) : null;
+    const t = sp ? make.ofType(sp.type, sp.tag) : null;
     if (t) { t.career = c.id; out.push(t); }
     return out;
   }
@@ -73,7 +77,7 @@
         ${ART.portrait("marta", "happy")}
         <div><p class="eyebrow">${cur ? "Cambio de especialidad" : "Ya eres Analista SOC N2"}</p>
         <h2>${cur ? "¿Quieres cambiar de carrera?" : "Elige tu especialidad"}</h2>
-        <p class="small">${cur ? "Cambiar cuesta " + TA.money(SWITCH_COST) + " (el curso de reconversión). Lo que ganaste en cada carrera queda guardado por si vuelves." : "Marta te ofrece especializarte. Desde ahora, 2 de los 6 tickets de cada turno serán de tu carrera. Podrás cambiar después."}</p></div>
+        <p class="small">${cur ? "Cambiar cuesta " + TA.money(SWITCH_COST) + " (el curso de reconversión). Lo que ganaste en cada carrera queda guardado por si vuelves." : "Marta te ofrece especializarte. Estudias la inducción de tu carrera en Capacitación y, desde ahí, 2 de los 6 tickets de cada turno serán de tu especialidad. Podrás cambiar después."}</p></div>
       </header>
       <ul class="cars">${CAREERS.map(card).join("")}</ul>
       <button class="btn ghost wide" data-close>${cur ? "Cerrar" : "Decidir más tarde"}</button>

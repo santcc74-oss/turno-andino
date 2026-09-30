@@ -837,6 +837,56 @@ textarea { width: 100%; font-size: .8rem; padding: 10px; border-radius: 10px; bo
 .tcard.got .tac { background: var(--brass-soft); color: var(--brass); }
 .tcard .det { border-top: 1px solid var(--line); padding-top: 4px; margin-top: 2px; }
 
+/* ——— Ruta de aprendizaje: capacitación, lecciones y guías ——— */
+.train { display: flex; flex-direction: column; gap: 10px; padding: 16px; border-radius: var(--r); background: var(--card); border: 1.5px solid var(--teal); }
+.train.done { flex-direction: row; align-items: center; gap: 12px; border-color: var(--line); }
+.train.done > div { flex: 1; }
+.train-top { display: flex; justify-content: space-between; align-items: center; gap: 10px; }
+.train-top .btn, .train.done .btn { min-height: 40px; padding: 8px 12px; font-size: .88rem; }
+.train .eyebrow { color: var(--teal); }
+.train-next, .ls-row {
+  appearance: none; width: 100%; display: grid; grid-template-columns: auto 1fr; gap: 12px; align-items: center; text-align: left;
+  padding: 12px; border-radius: 12px; border: 1px solid var(--line); background: var(--bg); color: var(--ink); font: inherit; cursor: pointer;
+}
+.train-next small, .ls-row small { display: block; color: var(--muted); font-size: .82rem; line-height: 1.35; }
+.ls-state { flex: none; width: 34px; height: 34px; border-radius: 50%; display: grid; place-items: center; background: var(--teal); color: #fff; font: 700 .9rem/1 var(--f-body); }
+.ls-row.done .ls-state { background: var(--teal-soft); color: var(--teal); }
+.ls-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
+.ls-head { display: grid; grid-template-columns: auto 1fr; gap: 12px; align-items: center; }
+.ls-head h2 { font-size: 1.35rem; }
+.ls-dots { display: flex; gap: 5px; }
+.ls-dots i { flex: 1; height: 4px; border-radius: 2px; background: var(--card-2); }
+.ls-dots i.on { background: var(--teal); } .ls-dots i.cur { background: var(--brass); }
+.ls-card { display: flex; flex-direction: column; gap: 12px; padding: 18px 16px; border-radius: var(--r); background: var(--card); border: 1px solid var(--line); box-shadow: var(--shadow); }
+.ls-simple { font-size: 1.08rem; line-height: 1.65; }
+.ls-body { font-size: 1.02rem; line-height: 1.65; }
+.ls-body code { font-size: .88em; }
+.ls-obj { margin: 0; padding-left: 1.2rem; display: flex; flex-direction: column; gap: 8px; }
+.ls-done { display: flex; flex-direction: column; align-items: center; gap: 12px; text-align: center; padding: 30px 8px; }
+.ls-done .portrait { width: 72px; height: 72px; }
+.primer { border-color: var(--teal); border-width: 1.5px; }
+.primer .t-label { color: var(--teal); }
+.primer-ex { margin: 0; padding: 12px; border-radius: 10px; background: #0D1622; color: #D6DFEA; font-size: .76rem; line-height: 1.5; white-space: pre-wrap; overflow-wrap: anywhere; }
+.primer-how { padding: 10px 12px; border-radius: 10px; background: var(--teal-soft); }
+.card-btn:disabled { opacity: .5; cursor: default; }
+
+/* ——— Vida: equipo por niveles, hogar, certificaciones y recuerdos ——— */
+.shelf-it { position: relative; display: inline-block; }
+.shelf-it i { position: absolute; right: -4px; bottom: -2px; font: 700 .62rem/1 var(--f-mono); color: #0F1B2D; background: #E0AC52; border-radius: 6px; padding: 2px 4px; font-style: normal; }
+.item .up { color: var(--teal); }
+.lv { display: inline-flex; gap: 4px; margin-top: 4px; }
+.lv i { width: 16px; height: 5px; border-radius: 3px; background: var(--card-2); }
+.lv i.on { background: var(--brass); }
+.co-card.cert.got { border-color: var(--teal); }
+.souv { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+.souv li { display: flex; flex-direction: column; gap: 4px; padding: 8px; border-radius: 12px; background: var(--card); border: 1px solid var(--line); min-width: 0; }
+.souv li.got { border-color: var(--brass); }
+.souv b { font-size: .8rem; line-height: 1.2; }
+.souv small { font-size: .72rem; color: var(--muted); }
+.souv .btn.buy { min-height: 34px; padding: 6px; font-size: .74rem; }
+.souv .st { align-self: flex-start; font-size: .6rem; }
+.scene.mini { border-radius: 8px; }
+
 @media (max-width: 360px) {
   .iata { font-size: 2.4rem; }
   .pass-stub dl { grid-template-columns: repeat(2, 1fr); }

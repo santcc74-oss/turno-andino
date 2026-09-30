@@ -8,6 +8,7 @@ Eres analista del SOC del Banco Andino, un banco ficticio. Cada turno dura unos 
 
 ## Qué hay adentro
 
+- **Primero aprendes, luego juegas:** cada ciudad abre con su capacitación (28 lecciones cortas con explicación sencilla, lecciones, objetivos y comprobación). En los turnos solo salen preguntas y minijuegos de lo que ya estudiaste, y cada minijuego nuevo trae su guía «cómo se juega».
 - **14 minijuegos:** phishing por correo, SMS, WhatsApp y QR; llamadas de estafadores; cazar la línea sospechosa en logs; **revisión de código real** (Python, Java, JavaScript, configuraciones); **encabezados de correo** con SPF, DKIM y DMARC; **consultas de SIEM** en KQL, SPL y Wazuh; **priorización de CVE reales** (Log4Shell, EternalBlue, MOVEit, Zerologon…); procedimientos, puertos, cifrados, resultados de escaneos, matriz de riesgo, comandos de terminal y preguntas del equipo.
 - **Examen de sede** para ganar cada sello del pasaporte.
 - **7 carreras** para elegir al llegar a Analista SOC N2: Blue Team/SOC, respuesta a incidentes y forense, pentesting ético, AppSec/DevSecOps, fraude bancario, nube y GRC. Cada una con sus cargos, sus casos, minijuegos propios (escaneos, matriz de riesgo) y la certificación real de referencia.
@@ -18,7 +19,8 @@ Eres analista del SOC del Banco Andino, un banco ficticio. Cada turno dura unos 
 - **Escenas de cada ciudad** que cambian de día, atardecer y noche según tu hora.
 - **Diccionario del SOC** con más de 200 términos explicados con palabras sencillas y ejemplos: las palabras técnicas vienen subrayadas en cada ticket.
 - **Sin repeticiones:** el juego recuerda lo que ya viste y agrupa las preguntas que dicen lo mismo con otras palabras.
-- **46 logros** en bronce, plata y oro, **misiones diarias y semanales**, y un medidor de **preparación para Security+** por dominio del SY0-701.
+- **Vida:** equipo con 3 niveles, 5 viviendas, vouchers de 6 certificaciones reales con su examen (ISC2 CC, Security+, CySA+, PenTest+, PCIP, AWS Security) y recuerdos de las 9 ciudades.
+- **72 logros** en bronce, plata y oro, **misiones diarias y semanales**, y un medidor de **preparación para Security+** por dominio del SY0-701.
 
 ## Instalarlo en el iPhone
 

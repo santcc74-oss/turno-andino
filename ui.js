@@ -48,11 +48,13 @@
       ${examCity ? `<section class="resume">
         <div><p class="eyebrow">Examen a medias</p><p><b>${esc(examCity.city)}</b> · pregunta ${Math.min(S.exam.i + 1, S.exam.ids.length)} de ${S.exam.ids.length}</p></div>
         <button class="btn primary" id="h-exam-resume">Seguir</button>
-      </section>` : st === "exam" ? `<section class="exam-card">
+      </section>` : st === "exam" && LEARN.allLearned(city.code) ? `<section class="exam-card">
         ${ART.portrait("marta", "happy", "sm")}
         <div><p class="eyebrow">Examen de sala de espera listo</p><p>${PLAY.EXAM_N} preguntas de ${esc(city.city)}. Con ${PLAY.EXAM_PASS} aciertos ganas el sello.</p></div>
         <button class="btn primary wide" id="h-exam">Presentar el examen</button>
       </section>` : ""}
+
+      ${trainingCard(city)}
 
       <section class="pass" aria-label="Pase de abordar de tu próximo turno">
         <div class="pass-scene">${SCENE.scene(city.code, { label: "Paisaje de " + city.city })}<span class="scene-tag mono">${esc(city.city)} · ${{ day: "de día", dusk: "atardecer", night: "de noche" }[SCENE.phase()]}</span></div>
@@ -72,7 +74,8 @@
             <div><dt>Duración</dt><dd>≈3 min</dd></div>
             <div><dt>Sello</dt><dd>${st === "done" ? "Listo" : st === "exam" ? "Examen" : Math.min(prog.good, TA.GOOD_FOR_STAMP) + "/" + TA.GOOD_FOR_STAMP}</dd></div>
           </dl>
-          <button class="btn primary wide big" id="h-start">${pending ? "Empezar uno nuevo" : "Empezar turno"}</button>
+          ${LEARN.canWork(city.code) ? `<button class="btn primary wide big" id="h-start">${pending ? "Empezar uno nuevo" : "Empezar turno"}</button>`
+            : `<button class="btn primary wide big" id="h-learn-first">Primero, tu capacitación</button><p class="small center">Estudia un tema de ${esc(city.city)} (unos ${LEARN.minutes(city.mods[0])} minutos) y se abre tu primer turno.</p>`}
         </div>
       </section>
 
@@ -80,7 +83,7 @@
       ${missionsCard()}
 
       <section class="duo-cards">
-        <button class="card-btn" id="h-flash">
+        <button class="card-btn" id="h-flash" ${TA.S.learned && Object.keys(TA.S.learned).length ? "" : "disabled"}>
           <span class="eyebrow">60 segundos</span><b>Repaso relámpago</b>
           <small>${S.flashBest ? "Récord: " + S.flashBest : "Para cuando anuncian tu vuelo"}</small>
         </button>
@@ -112,6 +115,19 @@
     }
     if (CAREER.unlocked()) return `<button class="btn primary wide" id="h-pick">Elige tu especialidad</button>`;
     return `<p class="small">Al llegar a Analista SOC N2 eliges especialidad: SOC, forense, pentesting, AppSec, fraude, nube o cumplimiento.</p>`;
+  }
+
+  /* Tarjeta de capacitación de la sede actual. */
+  function trainingCard(city) {
+    const p = LEARN.cityProgress(city.code);
+    if (!p.next) return `<section class="train done"><span class="ls-state" aria-hidden="true">✓</span><div><p class="eyebrow">Capacitación de ${esc(city.city)}</p><p>Los ${p.total} temas aprendidos.</p></div><button class="btn ghost" id="h-aula">Repasar</button></section>`;
+    const m = MODULES.find((x) => x.id === p.next);
+    return `<section class="train">
+      <div class="train-top"><div><p class="eyebrow">Capacitación · ${esc(city.city)}</p><p><b>${p.done} de ${p.total} temas</b>${p.done ? "" : " · empieza aquí"}</p></div><button class="btn ghost" id="h-aula">Ver todo</button></div>
+      <div class="bar sm"><i style="width:${(p.done / p.total) * 100}%"></i></div>
+      <button class="train-next" id="h-lesson" data-mod="${m.id}"><span class="ls-state" aria-hidden="true">▶</span><span><b>${esc(m.title)}</b><small>${esc(m.summary)}</small><small class="mono">${LEARN.minutes(m.id)} min de lectura</small></span></button>
+      ${p.done && TA.cityProg(city.code).good >= TA.GOOD_FOR_STAMP ? `<p class="small">Tu examen de sede se abre cuando estudies los ${p.total} temas.</p>` : ""}
+    </section>`;
   }
 
   function missionsCard() {
@@ -157,8 +173,9 @@
         <p class="small">${esc(sel.intro)}</p>
         <div class="cc-prog"><span class="small">Turnos buenos y examen</span><span class="dots">${dots}</span></div>
         <div class="stack">
-          ${st === "exam" ? `<button class="btn primary wide" id="rt-exam">Presentar el examen de sede</button>` : ""}
-          <button class="btn ${st === "exam" ? "" : "primary"} wide" id="rt-start">Empezar turno en ${esc(sel.city)}</button>
+          <button class="btn wide" id="rt-aula">Capacitación · ${LEARN.cityProgress(sel.code).done} de ${LEARN.cityProgress(sel.code).total} temas</button>
+          ${st === "exam" && LEARN.allLearned(sel.code) ? `<button class="btn primary wide" id="rt-exam">Presentar el examen de sede</button>` : ""}
+          ${LEARN.canWork(sel.code) ? `<button class="btn ${st === "exam" && LEARN.allLearned(sel.code) ? "" : "primary"} wide" id="rt-start">Empezar turno en ${esc(sel.city)}</button>` : `<p class="small center">Estudia un tema de ${esc(sel.city)} para abrir sus turnos.</p>`}
         </div>
       </section>
       <details class="board-box">
@@ -166,32 +183,6 @@
         <div class="board-head mono" aria-hidden="true"><span>VUELO</span><span>DESTINO</span><span>PUERTA</span><span>ESTADO</span></div>
         <ul class="board">${rows}</ul>
       </details>`;
-  }
-
-  /* ——— Vida ——— */
-  function vida() {
-    const S = TA.S, r = TA.rankInfo(S.xp);
-    const items = ITEMS.map((it) => {
-      const own = TA.has(it.id), can = S.money >= it.price;
-      return `<li class="item ${own ? "own" : ""}">
-        ${glyph(it.glyph)}
-        <div class="item-t"><b>${esc(it.name)}</b><small>${esc(it.desc)}</small></div>
-        ${own ? `<span class="st done">Tuyo</span>` : `<button class="btn buy" data-id="${it.id}" ${can ? "" : "disabled"}>${TA.money(it.price)}</button>`}
-      </li>`;
-    }).join("");
-    const owned = ITEMS.filter((it) => TA.has(it.id));
-    return `
-      <section class="head">
-        <p class="eyebrow">Tu vida fuera del SOC</p>
-        <h1>Vida</h1>
-        <p>Cada turno te paga según tu cargo y tus aciertos. Hoy cobras hasta <b>${TA.money(r.salary)}</b> por turno. Arma tu escritorio: algunas cosas te ayudan en el trabajo.</p>
-      </section>
-      <section class="desk" aria-label="Tu escritorio">
-        <p class="eyebrow">Tu escritorio</p>
-        <div class="desk-shelf">${owned.length ? owned.map((it) => `<span title="${esc(it.name)}">${glyph(it.glyph)}</span>`).join("") : `<p class="small">Vacío por ahora. Con uno o dos turnos te alcanza para la primera planta.</p>`}</div>
-        <p class="wallet mono">SALDO ${TA.money(S.money)}</p>
-      </section>
-      <ul class="shop">${items}</ul>`;
   }
 
   /* ——— Pasaporte: sellos, logros, carrera y expediente ——— */
@@ -317,7 +308,7 @@
     </section>`;
   }
 
-  const VIEWS = { hoy, rutas, vida, pasaporte, perfil, empresa: () => TYC.view() };
+  const VIEWS = { hoy, rutas, vida: () => LIFE.view(), pasaporte, perfil, empresa: () => TYC.view() };
 
   function go(name) {
     view = VIEWS[name] ? name : "hoy";
@@ -333,6 +324,11 @@
     on("h-start", () => PLAY.start());
     on("h-resume", () => PLAY.resume());
     on("h-flash", () => PLAY.flash());
+    on("h-aula", () => LEARN.aula(TA.S.city, () => go(view)));
+    on("h-lesson", () => LEARN.lesson(document.getElementById("h-lesson").dataset.mod, () => go(view)));
+    on("h-learn-first", () => LEARN.lesson(LEARN.cityProgress(TA.S.city).next, () => go(view)));
+    on("rt-aula", () => LEARN.aula(TA.S.city, () => go(view)));
+    if (view === "vida") LIFE.wire(() => { const y = window.scrollY; go("vida"); window.scrollTo(0, y); });
     on("h-co", () => go("empresa"));
     if (view === "pasaporte" && passTab === "archivo") HIST.wire(() => go("pasaporte"));
     if (view === "empresa") TYC.wire(() => { const y = window.scrollY; go("empresa"); window.scrollTo(0, y); });
@@ -365,11 +361,6 @@
       }
     }
     document.querySelectorAll(".board-row").forEach((b) => b.onclick = () => { TA.S.city = b.dataset.code; TA.save(); go("rutas"); });
-    document.querySelectorAll(".buy").forEach((b) => b.onclick = () => {
-      const it = ITEMS.find((x) => x.id === b.dataset.id);
-      if (!it || TA.S.money < it.price || TA.has(it.id)) return;
-      TA.S.money -= it.price; TA.S.owned[it.id] = TA.dayKey(); TA.save(); PROG.buy(it.id); go("vida");
-    });
     on("pf-copy", () => {
       const txt = JSON.stringify(Object.assign({}, TA.S, { app: "turno-andino" }));
       const area = $("#pf-text"), msg = $("#pf-msg");
@@ -397,7 +388,7 @@
   function intro() {
     const steps = [
       ["marta", "Bienvenido al Banco Andino", "Soy Marta Quintero, jefa del SOC. Empiezas como practicante. Cada turno dura unos 3 minutos y trae 6 tickets: correos, llamadas, alertas y preguntas del equipo."],
-      ["juli", "Cómo se juega", "Resuelve cada ticket. Los aciertos te dan reputación y te acercan al ascenso. Los errores le bajan la salud al banco, pero siempre verás la explicación. Lo que falles volverá después para que lo repases."],
+      ["juli", "Primero aprendes, luego trabajas", "Cada ciudad empieza con su capacitación: lecciones cortas con explicaciones sencillas. Después resuelves tickets solo de lo que ya estudiaste. Resuelve cada ticket. Los aciertos te dan reputación y te acercan al ascenso. Los errores le bajan la salud al banco, pero siempre verás la explicación. Lo que falles volverá después para que lo repases."],
       ["cama", "Cuidado con el Camaleón", "Un estafador se disfraza de soporte, de presidente o de aerolínea. Cada vez que lo atrapes se abre una página de su expediente. Puedes pausar el turno cuando quieras: queda guardado."],
     ];
     let k = 0;
@@ -408,13 +399,13 @@
         <p class="eyebrow mono">${k + 1} / ${steps.length}</p>
         <div class="from">${ART.portrait(who, who === "cama" ? "smug" : "happy")}<div><b>${esc(c.name)}</b><small>${esc(c.role)}</small></div></div>
         <h2>${esc(h)}</h2><p>${esc(p)}</p>
-        <button class="btn primary wide big" id="in-next">${k < steps.length - 1 ? "Siguiente" : "Empezar mi primer turno"}</button>
+        <button class="btn primary wide big" id="in-next">${k < steps.length - 1 ? "Siguiente" : "Empezar mi capacitación"}</button>
         ${k < steps.length - 1 ? `<button class="btn ghost wide" id="in-skip">Saltar</button>` : ""}
       </div>`;
       $("#in-next").onclick = () => { if (k < steps.length - 1) { k++; draw(); } else finish(true); };
       const sk = $("#in-skip"); if (sk) sk.onclick = () => finish(false);
     };
-    const finish = (startNow) => { TA.S.intro = true; TA.save(); el.hidden = true; go("hoy"); if (startNow) PLAY.start(); };
+    const finish = (startNow) => { TA.S.intro = true; TA.save(); el.hidden = true; go("hoy"); if (startNow) LEARN.lesson(LEARN.cityProgress(TA.S.city).next || TA.cityByCode(TA.S.city).mods[0], () => go("hoy")); };
     el.hidden = false;
     draw();
   }

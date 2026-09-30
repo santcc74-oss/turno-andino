@@ -2,7 +2,7 @@
 (function () {
   const { rand, pick, shuffle, esc } = TA;
   const TICKETS_PER_SHIFT = 6;
-  const XP_OK = 20, XP_FAST = 5, HEALTH_HIT = 20;
+  const XP_OK = 20, XP_FAST = 5;
   const EXAM_N = 10, EXAM_PASS = 8, EXAM_XP = 60;
 
   const $ = (sel, root) => (root || document).querySelector(sel);
@@ -69,7 +69,11 @@
   }
   const hex64 = () => Array.from({ length: 64 }, () => "0123456789abcdef"[rand(16)]).join("");
   function decodeTicket(code) {
-    const kind = pick(DEC_KINDS[code] || ["bin", "hex", "b64", "caesar", "hash"]);
+    const allowed = LEARN.decodeKinds();
+    const pool = (DEC_KINDS[code] || ["bin", "hex", "b64", "caesar", "hash"]).filter((k) => allowed.includes(k));
+    const kinds = pool.length ? pool : allowed;
+    if (!kinds.length) return null;
+    const kind = pick(kinds);
     const word = pick(DECODE_WORDS);
     const words = () => shuffle([word].concat(shuffle(DECODE_WORDS.filter((w) => w !== word)).slice(0, 3)));
     if (kind === "bin") {
@@ -111,16 +115,29 @@
 
   /* used = conceptos ya usados en este turno. Se prefiere siempre lo que menos has visto. */
   function makeOfType(type, city, used, tag) {
+    if (!LEARN.typeAllowed(type)) return null;
     const tg = tag || city.code;
-    const pf = (ids) => TA.pickFresh(ids, used);
-    if (type === "quiz") return quizTicket(pf(TA.quizIdsFor(city)));
+    const pf = (ids) => (ids.length ? TA.pickFresh(ids, used) : null);
+    /* Casos de una lista que ya se pueden mostrar según lo estudiado (primero los de la sede, si hay). */
+    const ok = (list, prefix, useTags) => {
+      const all = list.map((_, i) => i).filter((i) => LEARN.itemAllowed(prefix + i));
+      const tagged = useTags ? all.filter((i) => (list[i].tags || []).includes(tg)) : [];
+      return (tagged.length ? tagged : all).map((i) => prefix + i);
+    };
+    const num = (id, n) => (id == null ? null : +id.slice(n));
+    if (type === "quiz") { const ids = TA.learnedQuizIds(city); return ids.length ? quizTicket(pf(ids)) : null; }
     if (type === "mail") return msgTicket(pf(TA.msgIds()));
     if (type === "call") return callTicket(+pf(CALLS.map((_, i) => "c" + i)).slice(1));
-    if (type === "log") return logTicket(+pf(tagged(LOGS, tg).map((i) => "l" + i)).slice(1));
-    if (type === "order") return orderTicket(ORDERS[+pf(tagged(ORDERS, tg).map((i) => "o" + i)).slice(1)]);
+    if (type === "log") { const i = num(pf(ok(LOGS, "l", true)), 1); return i == null ? null : logTicket(i); }
+    if (type === "order") {
+      const idx = ORDERS.map((_, i) => i).filter((i) => LEARN.orderAllowed(ORDERS[i].title));
+      const pref = idx.filter((i) => (ORDERS[i].tags || []).includes(tg));
+      const i = num(pf((pref.length ? pref : idx).map((i) => "o" + i)), 1);
+      return i == null ? null : orderTicket(ORDERS[i]);
+    }
     if (type === "scan") return scanTicket(+pf(SCANS.map((_, i) => "sc" + i)).slice(2));
     if (type === "risk") return riskTicket(+pf(RISKS.map((_, i) => "rk" + i)).slice(2));
-    if (type === "cmd") return cmdTicket(+pf(tagged(CMDS, tg).map((i) => "cm" + i)).slice(2));
+    if (type === "cmd") { const i = num(pf(ok(CMDS, "cm", true)), 2); return i == null ? null : cmdTicket(i); }
     if (type === "decode") return decodeTicket(city.code);
     if (type === "ports") return portsTicket();
     if (type === "english") return englishTicket(city);
@@ -128,7 +145,7 @@
       const idx = useTags ? tagged(list, tg) : list.map((x, i) => i);
       return make(+pf(idx.map((i) => prefix + i)).slice(1));
     };
-    if (type === "code") return byPrefix(CODE, "k", codeTicket, true);
+    if (type === "code") { const i = num(pf(ok(CODE, "k", true)), 1); return i == null ? null : codeTicket(i); }
     if (type === "header") return byPrefix(HEADERS, "h", headerTicket, false);
     if (type === "siem") return byPrefix(SIEMQ, "s", siemTicket, true);
     if (type === "cve") return byPrefix(CVES, "v", cveTicket, false);
@@ -156,13 +173,14 @@
       if (t) { t.review = true; out.push(t); used.add(TA.concept(id)); }
     });
     const bag = [];
-    Object.entries(city.games).forEach(([type, w]) => { for (let i = 0; i < w; i++) bag.push(type); });
+    Object.entries(city.games).forEach(([type, w]) => { if (LEARN.typeAllowed(type)) for (let i = 0; i < w; i++) bag.push(type); });
+    const canQuiz = TA.learnedQuizIds(city).length > 0;
     /* Al menos 2 preguntas de la sede y máximo 2 tickets de cada tipo, para que el turno sea variado. */
     const count = {};
     out.forEach((t) => { count[t.type] = (count[t.type] || 0) + 1; });
     let last = null, guard = 0;
     while (out.length < TICKETS_PER_SHIFT && guard++ < 80) {
-      const needQuiz = (count.quiz || 0) < 2 && TICKETS_PER_SHIFT - out.length <= 2 - (count.quiz || 0);
+      const needQuiz = canQuiz && (count.quiz || 0) < 2 && TICKETS_PER_SHIFT - out.length <= 2 - (count.quiz || 0);
       const type = needQuiz ? "quiz" : pick(bag);
       if ((count[type] || 0) >= 2 && !needQuiz) continue;
       if (type === last && !needQuiz && bag.some((t) => t !== type)) continue;
@@ -171,6 +189,9 @@
       if (t.id) { if (used.has(TA.concept(t.id))) continue; used.add(TA.concept(t.id)); }
       out.push(t); last = type; count[type] = (count[type] || 0) + 1;
     }
+    /* Si faltan tickets (pocos temas estudiados), se completan con mensajes y llamadas, que siempre están disponibles. */
+    let g2 = 0;
+    while (out.length < TICKETS_PER_SHIFT && g2++ < 20) { const t = makeOfType(g2 % 2 ? "mail" : "call", city, used); if (t && !used.has(TA.concept(t.id))) { used.add(TA.concept(t.id)); out.push(t); } }
     /* Con especialidad, 2 de los 6 tickets son de tu carrera. */
     const extra = CAREER.tickets(city, { quizById: quizTicket, ofType: (tp, tag) => makeOfType(tp, city, used, tag), usedConcepts: used });
     const base = out.slice(0, TICKETS_PER_SHIFT - extra.length);
@@ -182,7 +203,7 @@
 
   function start(code) {
     const S = TA.S, city = TA.cityByCode(code || S.city);
-    S.cur = { city: city.code, tickets: buildShift(city), i: 0, health: 100, res: [], hints: TA.hintsPerShift(), shield: TA.has("llave"), xp: 0, elapsed: 0, fb: null };
+    S.cur = { city: city.code, tickets: buildShift(city), i: 0, health: 100, res: [], hints: TA.hintsPerShift(), shield: TA.shields(), xp: 0, elapsed: 0, fb: null };
     TA.save();
     open();
   }
@@ -223,6 +244,7 @@
     el.innerHTML = header(cur, city) + `<div class="sla" aria-hidden="true"><i id="sla-bar"></i></div><div class="p-body" id="p-body"></div><div id="p-sheet"></div>`;
     $("#p-pause").onclick = pause;
     const body = $("#p-body");
+    if (!cur.fb && LEARN.needsPrimer(t)) { stopTimer(); LEARN.primer(body, t, () => { cur.elapsed = 0; render(); }); return; }
     const R = RENDER[t.type];
     R(body, t, (ok, extra) => resolve(ok, extra));
     if (t.career) { const l = body.querySelector(".t-label"); if (l) l.insertAdjacentHTML("afterbegin", '<span class="tag car-tag">Especialidad</span> '); }
@@ -252,7 +274,7 @@
     const fast = ok && cur.elapsed < slaFor(t);
     let gain = ok ? XP_OK + (fast ? XP_FAST : 0) : 0;
     let hit = 0, shielded = false;
-    if (!ok) { if (cur.shield) { cur.shield = false; shielded = true; } else hit = HEALTH_HIT; }
+    if (!ok) { if (cur.shield > 0) { cur.shield -= 1; shielded = true; } else hit = TA.hitDamage(); }
     cur.health -= hit; cur.xp += gain;
     S.answered += 1; if (ok) S.correct += 1;
     if (t.id) TA.markResult(t.id, ok);
@@ -363,9 +385,9 @@
     const acc = n ? good / n : 0;
     const stars = cur.health <= 0 ? 0 : acc >= 0.9 ? 3 : acc >= 0.7 ? 2 : acc >= 0.4 ? 1 : 0;
     let xp = cur.xp + (cur.health > 0 ? 20 : 0);
-    if (TA.has("monitor")) xp = Math.round(xp * 1.15);
-    if (TA.has("homelab") && cur.health > 0) xp += 30;
-    const pay = Math.round(before.salary * (0.4 + 0.6 * acc));
+    xp = Math.round(xp * TA.xpMult());
+    if (cur.health > 0) xp += TA.labXp();
+    const pay = Math.round(before.salary * TA.salaryMult() * (0.4 + 0.6 * acc));
     S.xp += xp; S.money += pay; S.shifts += 1;
     const prog = TA.cityProg(city.code);
     prog.shifts += 1;
@@ -373,7 +395,7 @@
     const examReady = prog.good >= TA.GOOD_FOR_STAMP && !S.stamps[city.code];
     TA.touchStreak();
     const coDay = TYC.founded() ? TYC.nextDay() : null;
-    PROG.shift({ stars, health: cur.health, perfect: n > 0 && good === n, camaCaught: cur.res.filter((r) => r.cama === "caught").length, shieldUsed: TA.has("llave") && !cur.shield });
+    PROG.shift({ stars, health: cur.health, perfect: n > 0 && good === n, camaCaught: cur.res.filter((r) => r.cama === "caught").length, shieldUsed: cur.shield < TA.shields() });
     const after = TA.rankInfo(S.xp);
     const res = cur.res;
     S.cur = null;
@@ -814,7 +836,8 @@
   function flash() {
     const S = TA.S;
     let ids = [];
-    CITIES.filter((c) => TA.cityOpen(c.code)).forEach((c) => { ids = ids.concat(TA.quizIdsFor(c)); });
+    CITIES.forEach((c) => { ids = ids.concat(TA.learnedQuizIds(c)); });
+    if (!ids.length) { close(); return; }
     const seen = ids.filter((id) => S.seen[id]);
     const seenC = new Set();
     const pool = shuffle(seen.length >= 12 ? seen : ids).sort((a, b) => TA.seenCount(a) - TA.seenCount(b))
@@ -885,7 +908,7 @@
     if (!S.exam || S.exam.city !== code) {
       const city = TA.cityByCode(code);
       const seenC = new Set();
-      const ids = shuffle(TA.quizIdsFor(city)).filter((id) => { const c = TA.concept(id); if (seenC.has(c)) return false; seenC.add(c); return true; });
+      const ids = shuffle(TA.learnedQuizIds(city)).filter((id) => { const c = TA.concept(id); if (seenC.has(c)) return false; seenC.add(c); return true; });
       S.exam = { city: code, ids: ids.slice(0, EXAM_N), i: 0, right: 0, misses: [], last: null };
       TA.save();
     }

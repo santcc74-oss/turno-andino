@@ -73,6 +73,7 @@
     { id: "header", t: "Analiza bien 2 encabezados de correo", goal: 2, on: "ticket", needs: "header", when: (e) => e.type === "header" && e.ok },
     { id: "career", t: "Resuelve bien 3 casos de tu especialidad", goal: 3, on: "ticket", needs: "career", when: (e) => e.career && e.ok },
     { id: "gloss", t: "Aprende 3 palabras nuevas del diccionario", goal: 3, on: "gloss" },
+    { id: "learn", t: "Estudia un tema nuevo en Capacitación", goal: 1, on: "learn", needs: "unlearned" },
     { id: "cmd", t: "Elige bien 2 comandos en la terminal", goal: 2, on: "ticket", needs: "cmd", when: (e) => e.type === "cmd" && e.ok },
   ];
   const WEEKLY = [
@@ -94,6 +95,7 @@
     const set = new Set();
     CITIES.filter((c) => TA.cityOpen(c.code)).forEach((c) => Object.keys(c.games).forEach((g) => set.add(g)));
     if (S().career) set.add("career");
+    if (MODULES.some((m) => !(S().learned || {})[m.id])) set.add("unlearned");
     return set;
   }
   function ensureMissions() {
@@ -197,8 +199,15 @@
     A("o-call", "craft", "bronce", "Buen oído", "Resuelve bien 15 llamadas.", () => [val("ok_call"), 15]),
     A("o-en", "craft", "plata", "Políglota", "Resuelve bien 20 tickets en inglés.", () => [val("ok_en"), 20]),
 
-    A("v-buy", "life", "bronce", "Primera compra", "Compra tu primer objeto.", () => [Object.keys(S().owned).length, 1]),
-    A("v-all", "life", "oro", "Escritorio completo", "Ten todos los objetos de la tienda.", () => [Object.keys(S().owned).length, ITEMS.length]),
+    A("v-buy", "life", "bronce", "Primera compra", "Compra tu primer objeto.", () => [Object.keys(S().gear || {}).length, 1]),
+    A("v-all", "life", "oro", "Equipo al máximo", "Sube todo tu equipo al nivel máximo.", () => [GEAR.filter((g) => (S().gear || {})[g.id] === g.levels.length).length, GEAR.length]),
+    A("v-home", "life", "plata", "Casa propia", "Múdate a una casa con estudio.", () => [S().home || 0, 3]),
+    A("v-souv", "life", "plata", "Recuerdos de viaje", "Completa la colección de recuerdos de las 9 ciudades.", () => [Object.keys(S().souvenirs || {}).length, CITIES.length]),
+    A("v-cert1", "career", "plata", "Certificado", "Aprueba tu primera certificación.", () => [Object.keys(S().certs || {}).length, 1]),
+    A("v-cert3", "career", "oro", "Colección de certificaciones", "Aprueba 3 certificaciones.", () => [Object.keys(S().certs || {}).length, 3]),
+    A("l-1", "craft", "bronce", "Primera lección", "Estudia tu primer tema en Capacitación.", () => [Object.keys(S().learned || {}).length, 1]),
+    A("l-10", "craft", "plata", "Estudioso", "Estudia 10 temas.", () => [Object.keys(S().learned || {}).length, 10]),
+    A("l-all", "craft", "oro", "Biblioteca completa", "Estudia los 28 temas de la ruta.", () => [Object.keys(S().learned || {}).length, MODULES.length]),
     A("v-save", "life", "plata", "Ahorrador", "Junta ₳ 1.000 al mismo tiempo.", () => [val("moneyBest"), 1000]),
 
     A("t-offline", "travel", "plata", "Turno en pleno vuelo", "Termina un turno sin conexión a internet.", () => [val("offline"), 1]),
@@ -291,6 +300,7 @@
   }
   function flash(e) { bumpMissions("flash", e); check(); }
   function gloss() { bumpMissions("gloss", {}); check(); }
+  function learn() { bumpMissions("learn", {}); check(); }
   function exam(e) {
     const tries = "examTries_" + e.city;
     inc(tries);
@@ -341,5 +351,5 @@
     setTimeout(() => { el.classList.add("out"); setTimeout(() => { el.remove(); nextToast(); }, 300); }, 2600);
   }
 
-  window.PROG = { ticket, shift, flash, exam, buy, gloss, check, claim, missions, ensureMissions, achievements, medal, readiness, DOMAINS, toast };
+  window.PROG = { ticket, shift, flash, exam, buy, gloss, learn, check, claim, missions, ensureMissions, achievements, medal, readiness, DOMAINS, toast };
 })();

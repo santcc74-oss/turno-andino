@@ -1,10 +1,10 @@
 /* Turno Andino — service worker: guarda el juego en el teléfono para jugar sin internet.
    Al cambiar cualquier archivo, sube VERSION para que el teléfono descargue la versión nueva. */
-const VERSION = "ta-v7";
+const VERSION = "ta-v8";
 const FILES = [
   "./", "index.html", "style.css", "manifest.webmanifest",
-  "data/glossary.js", "data/glossary-plus-a.js", "data/glossary-plus-b.js", "data/modules-a.js", "data/modules-b.js", "data/modules-c.js", "data/objchecks.js", "data/extras.js", "data/distractors.js", "data/questions-extra.js",
-  "content-world.js", "content-cases.js", "content-real.js", "content-careers.js", "content-tycoon.js", "content-history.js", "state.js", "progress.js", "art.js", "scenes.js", "gloss.js", "career.js", "tycoon.js", "history.js", "shift.js", "ui.js",
+  "data/glossary.js", "data/glossary-plus-a.js", "data/glossary-plus-b.js", "data/modules-a.js", "data/modules-b.js", "data/modules-c.js", "data/objchecks.js", "data/explain.js", "data/extras.js", "data/distractors.js", "data/questions-extra.js",
+  "content-world.js", "content-cases.js", "content-real.js", "content-careers.js", "content-tycoon.js", "content-history.js", "content-learn.js", "content-life.js", "state.js", "progress.js", "art.js", "scenes.js", "gloss.js", "learn.js", "life.js", "career.js", "tycoon.js", "history.js", "shift.js", "ui.js",
   "icons/icon.svg", "icons/icon-180.png", "icons/icon-192.png", "icons/icon-512.png",
 ];
 

@@ -13,6 +13,7 @@
     flashBest: 0, cur: null, exam: null, mapSeen: 1,
     st: {}, dom: {}, ach: {}, daily: null, weekly: null,
     seenN: {}, career: null, careers: {}, careerOffered: false, co: null, attack: {}, cases: {},
+    learned: {}, primers: {}, gear: {}, home: 0, certs: {}, souvenirs: {},
   });
 
   function merge(raw) {
@@ -21,6 +22,15 @@
     for (const k of Object.keys(base)) if (raw[k] !== undefined) base[k] = raw[k];
     base.cama = Object.assign(fresh().cama, raw.cama || {});
     base.streak = Object.assign(fresh().streak, raw.streak || {});
+    /* Compras de la versión anterior (sin niveles): cada objeto pasa a nivel 1; el termo suma un nivel al café. */
+    if (raw.owned && !raw.gear) {
+      Object.keys(raw.owned).forEach((id) => { if (id !== "termo") base.gear[id] = 1; });
+      if (raw.owned.termo) base.gear.cafe = Math.min(3, (base.gear.cafe || 0) + 1);
+    }
+    /* Quien ya jugaba conserva sus temas: se marcan como aprendidos los de las ciudades con sello. */
+    if (!raw.learned && raw.stamps) Object.keys(raw.stamps).forEach((code) => {
+      const c = (window.CITIES || []).find((x) => x.code === code); if (c) c.mods.forEach((m) => { base.learned[m] = raw.stamps[code]; });
+    });
     /* Versiones anteriores solo marcaban las preguntas vistas; se cuentan como vistas una vez. */
     if (raw.seen && !raw.seenN) Object.keys(raw.seen).forEach((id) => { base.seenN[id] = 1; });
     return base;
@@ -77,9 +87,20 @@
   const GOOD_FOR_STAMP = 3;
 
   /* ——— Perks ——— */
-  const has = (id) => !!S.owned[id];
-  const hintsPerShift = () => (has("cafe") ? 1 : 0) + (has("termo") ? 1 : 0);
-  const slaSeconds = () => (has("audifonos") ? 35 : 25);
+  /* Nivel de cada objeto del equipo (0 = no lo tienes) y sus efectos. */
+  const level = (id) => (S.gear && S.gear[id]) || 0;
+  const has = (id) => level(id) > 0;
+  const hintsPerShift = () => level("cafe");
+  const slaSeconds = () => [25, 35, 45][level("audifonos")];
+  const hitDamage = () => [20, 15, 10][level("silla")];
+  const shields = () => level("llave");
+  const xpMult = () => [1, 1.15, 1.25, 1.35][level("monitor")];
+  const labXp = () => [0, 30, 60, 100][level("homelab")];
+  const freezes = () => level("maleta");
+  function salaryMult() {
+    const certPay = Object.keys(S.certs || {}).reduce((s, id) => { const c = (window.CERT_EXAMS || []).find((x) => x.id === id); return s + (c ? c.pay : 0); }, 0);
+    return 1 + level("laptop") * 0.1 + (S.home || 0) * 0.05 + certPay / 100;
+  }
 
   /* ——— Bancos de contenido ——— */
   const modById = (id) => MODULES.find((m) => m.id === id);
@@ -104,6 +125,9 @@
     if (city.code === "MAD") EXTRA_Q.forEach((_, i) => ids.push("x-" + i));
     return ids;
   }
+  /* Solo preguntas de los temas que ya estudiaste. */
+  const modOfId = (id) => { const m = /^(?:e-)?(m\w+?)-[qo]?\d+$/.exec(id) || /^e-(m\w+)-\d+$/.exec(id); return m ? m[1] : (/^x-/.test(id) ? "m27" : null); };
+  const learnedQuizIds = (city) => quizIdsFor(city).filter((id) => { const m = modOfId(id); return m && S.learned && S.learned[m]; });
   /* Mensajes: p = CyberRuta PHISH (correo), g = MSGS del juego.
      En PHISH, el Camaleón firma la alerta falsa del banco, el correo del «presidente» y el de micros0ft. */
   const PHISH_CAMA = [0, 3, 5];
@@ -171,7 +195,9 @@
     const gap = st.last ? dayNum(today) - dayNum(st.last) : 99;
     const week = Math.floor(dayNum(today) / 7);
     if (gap === 1) st.cur += 1;
-    else if (gap === 2 && has("maleta") && st.freezeWeek !== week) { st.cur += 1; st.freezeWeek = week; }
+    else if (gap === 2 && freezes() > (st.freezeWeek === week ? st.freezeUsed || 0 : 0)) {
+      st.freezeUsed = st.freezeWeek === week ? (st.freezeUsed || 0) + 1 : 1; st.freezeWeek = week; st.cur += 1;
+    }
     else st.cur = 1;
     st.last = today;
     st.best = Math.max(st.best, st.cur);
@@ -181,7 +207,7 @@
     if (!st.last) return 0;
     const gap = dayNum(dayKey()) - dayNum(st.last);
     if (gap <= 1) return st.cur;
-    if (gap === 2 && has("maleta") && st.freezeWeek !== Math.floor(dayNum(dayKey()) / 7)) return st.cur;
+    if (gap === 2 && freezes() > (st.freezeWeek === Math.floor(dayNum(dayKey()) / 7) ? st.freezeUsed || 0 : 0)) return st.cur;
     return 0;
   }
 
@@ -209,7 +235,7 @@
     get S() { return S; }, save, reset, load, LS_KEY,
     rand, pick, shuffle, esc, dayKey, money,
     rankIndex, rankInfo, cityByCode, cityProg, cityOpen, GOOD_FOR_STAMP,
-    has, hintsPerShift, slaSeconds,
+    has, level, hintsPerShift, slaSeconds, hitDamage, shields, xpMult, labXp, freezes, salaryMult, learnedQuizIds, modOfId,
     modById, quizById, quizIdsFor, msgById, msgIds, englishPairs,
     touchStreak, streakAlive, markResult, dueReview,
     concept, seenCount, markSeen, pickFresh,

@@ -49,25 +49,7 @@ window.CHARACTERS = {
   cama: { name: "El Camaleón", role: "Estafador buscado", ini: "¿?" },
 };
 
-/* Objetos para tu vida: se compran con el salario. perk = efecto en el juego. */
-window.ITEMS = [
-  { id: "planta", name: "Una planta", price: 40, perk: null, glyph: "plant",
-    desc: "No hace nada. Pero el escritorio se ve mejor y tú lo sabes." },
-  { id: "cafe", name: "Café de origen", price: 90, perk: "hint", glyph: "cup",
-    desc: "+1 pista por turno. Una pista descarta una respuesta incorrecta." },
-  { id: "audifonos", name: "Audífonos con cancelación de ruido", price: 150, perk: "sla", glyph: "phones",
-    desc: "El tiempo para el bono de rapidez sube de 25 a 35 segundos. Ideal en el bus." },
-  { id: "maleta", name: "Maleta de cabina", price: 200, perk: "freeze", glyph: "bag",
-    desc: "Protege tu racha: si un día no juegas, la maleta la guarda (una vez por semana)." },
-  { id: "monitor", name: "Segundo monitor", price: 260, perk: "xp", glyph: "screen",
-    desc: "+15 % de reputación en cada turno." },
-  { id: "llave", name: "Llave de seguridad FIDO2", price: 320, perk: "shield", glyph: "key",
-    desc: "Tu primer error de cada turno no le baja la salud al banco." },
-  { id: "termo", name: "Termo para el turno largo", price: 380, perk: "hint", glyph: "flask",
-    desc: "+1 pista más por turno. Sí, se acumula con el café." },
-  { id: "homelab", name: "Home lab (mini PC)", price: 480, perk: "labxp", glyph: "server",
-    desc: "+30 de reputación extra al terminar cada turno. Practicar en casa se nota." },
-];
+/* Los objetos que se compran con el salario están en content-life.js (GEAR, HOMES, CERT_EXAMS, SOUVENIRS). */
 
 /* Expediente del Camaleón: se desbloquea una nota cada vez que lo atrapas N veces. */
 window.DOSSIER = [
@@ -106,5 +88,8 @@ window.GLYPHS = {
   screen: '<rect x="2" y="5" width="9" height="7" rx="1"/><rect x="13" y="5" width="9" height="7" rx="1"/><path d="M6 16h3M15 16h3M7.5 12v4M16.5 12v4"/>',
   key: '<circle cx="8" cy="12" r="4"/><path d="M12 12h9M18 12v3M21 12v2"/>',
   flask: '<rect x="8" y="6" width="8" height="15" rx="2"/><path d="M9 3h6v3H9zM8 11h8"/>',
+  chair: '<path d="M7 3h10v8H7zM6 11h12v3H6zM8 14l-2 7M16 14l2 7M12 14v7"/>',
+  laptop: '<rect x="5" y="5" width="14" height="10" rx="1.5"/><path d="M3 18h18l-1.5 2h-15z"/>',
+  home: '<path d="M4 11l8-7 8 7v9h-5v-6H9v6H4z"/>',
   server: '<rect x="4" y="4" width="16" height="7" rx="1.5"/><rect x="4" y="13" width="16" height="7" rx="1.5"/><path d="M8 7.5h.01M8 16.5h.01M12 7.5h5M12 16.5h5"/>',
 };
