@@ -14,6 +14,7 @@
     st: {}, dom: {}, ach: {}, daily: null, weekly: null,
     seenN: {}, career: null, careers: {}, careerOffered: false, co: null, attack: {}, cases: {},
     learned: {}, primers: {}, gear: {}, home: 0, certs: {}, souvenirs: {},
+    linux: { done: {} }, linuxReq: true,
   });
 
   function merge(raw) {
@@ -31,6 +32,8 @@
     if (!raw.learned && raw.stamps) Object.keys(raw.stamps).forEach((code) => {
       const c = (window.CITIES || []).find((x) => x.code === code); if (c) c.mods.forEach((m) => { base.learned[m] = raw.stamps[code]; });
     });
+    /* El Campamento Linux es obligatorio solo para partidas nuevas: quien ya había empezado la ruta no queda bloqueado. */
+    if (!raw.linux) base.linuxReq = !((raw.learned && Object.keys(raw.learned).length) || raw.shifts > 0 || (raw.stamps && Object.keys(raw.stamps).length));
     /* Versiones anteriores solo marcaban las preguntas vistas; se cuentan como vistas una vez. */
     if (raw.seen && !raw.seenN) Object.keys(raw.seen).forEach((id) => { base.seenN[id] = 1; });
     return base;

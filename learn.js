@@ -7,7 +7,8 @@
   const G = window.GLOSSARY_PLUS || {};
   const S = () => TA.S;
   const mod = (id) => MODULES.find((m) => m.id === id);
-  const learned = (id) => !!(S().learned && S().learned[id]);
+  /* Los niveles del Campamento Linux (lx…) cuentan como temas estudiados para desbloquear juegos. */
+  const learned = (id) => (/^lx\d/.test(id) ? !!(S().linux && S().linux.done && S().linux.done[id]) : !!(S().learned && S().learned[id]));
 
   /* ——— Reglas ——— */
   function needsMet(n) {
@@ -28,7 +29,7 @@
     const mods = cityMods(code);
     return { done: mods.filter(learned).length, total: mods.length, next: mods.find((m) => !learned(m)) || null };
   }
-  const canWork = (code) => cityProgress(code).done > 0;
+  const canWork = (code) => cityProgress(code).done > 0 && !(window.LINUX && LINUX.blocking());
   const allLearned = (code) => cityProgress(code).done === cityMods(code).length;
   const minutes = (id) => {
     const m = mod(id);
@@ -140,7 +141,7 @@
   function aula(code, onClose) {
     const city = TA.cityByCode(code);
     const el = overlay("aula", "Capacitación");
-    const row = (id, extra) => `<li><button class="ls-row ${learned(id) ? "done" : ""}" data-mod="${id}">
+    const row = (id, extra) => `<li><button class="ls-row ${learned(id) ? "done" : ""}" data-mod="${id}" ${window.LINUX && LINUX.blocking() ? "disabled" : ""}>
       <span class="ls-state" aria-hidden="true">${learned(id) ? "✓" : "▶"}</span>
       <span><b>${esc(mod(id).title)}</b><small>${esc(mod(id).summary)}</small><small class="mono">${minutes(id)} min${extra ? " · " + extra : ""}</small></span></button></li>`;
     const draw = () => {
@@ -152,12 +153,14 @@
           <div><p class="eyebrow">Capacitación · ${esc(city.city)}</p><h2>${p.done} de ${p.total} temas aprendidos</h2></div></header>
         <div class="bar"><i style="width:${(p.done / p.total) * 100}%"></i></div>
         <p class="small">Primero estudias, después trabajas: en tus turnos solo salen preguntas de los temas que ya aprendiste. Con los ${p.total} temas se abre el examen de sede.</p>
+        ${window.LINUX && LINUX.blocking() ? `<section class="camp-lock"><p><b>Primero, el Campamento Linux.</b> Antes de la ciberseguridad aprendes a usar la terminal: ${LINUX.count()} de ${LX_LEVELS.length} niveles hechos.</p><button class="btn primary wide" data-camp>Ir al Campamento Linux</button></section>` : ""}
         <ul class="ls-list">${city.mods.map((m) => row(m)).join("")}</ul>
         ${carMods.length ? `<section class="block"><h3>Inducción de tu carrera: ${esc(car.name)}</h3><p class="small">Estos temas te preparan para los casos de especialidad.</p><ul class="ls-list">${carMods.map((m) => row(m, "especialidad")).join("")}</ul></section>` : ""}
         ${past.length ? `<details class="block"><summary>Repasar temas de otras sedes (${past.length})</summary><ul class="ls-list">${past.map((m) => row(m)).join("")}</ul></details>` : ""}
       </div>`;
       el.querySelector("[data-x]").onclick = () => { closeOverlay(el); if (onClose) onClose(); };
       el.querySelectorAll("[data-mod]").forEach((b) => b.onclick = () => lesson(b.dataset.mod, () => draw()));
+      const camp = el.querySelector("[data-camp]"); if (camp) camp.onclick = () => LINUX.open(() => draw());
     };
     draw();
   }

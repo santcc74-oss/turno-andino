@@ -9,6 +9,8 @@ window.TYPE_NEEDS = {
   order: { any: ["m08", "m16", "m18", "m20", "m21", "m22", "m26"] }, scan: ["m09"], risk: ["m13"],
   /* Juegos interactivos */
   spot: [], firewall: ["m08"], caesar: ["m14"], password: ["m15"], triage: ["m19"], zones: ["m07"],
+  /* Retos de terminal: se abren con el Campamento Linux */
+  shell: ["lx2"],
 };
 
 /* Temas que necesita cada caso concreto (por su id o su título). */
@@ -83,6 +85,9 @@ window.PRIMERS = {
   risk: { title: "Matriz de riesgo", intro: "Un riesgo se mide cruzando dos preguntas: ¿qué tan probable es? y ¿qué tan grave sería?",
     points: ["Probabilidad alta: ya está pasando en la región o no hay controles.", "Impacto alto: afecta dinero, datos de clientes o servicios críticos.", "Los controles existentes (MFA, cifrado, aislamiento) bajan la probabilidad o el impacto."],
     how: "Toca la casilla donde ubicarías el riesgo." },
+  shell: { title: "Terminal en vivo", intro: "Un compañero te pide una tarea en el servidor srv-web01. No hay opciones para elegir: la resuelves escribiendo comandos reales, como aprendiste en el Campamento Linux.",
+    points: ["Lee bien la tarea: qué archivo, qué carpeta, qué dato piden.", "Puedes escribir todos los comandos que quieras; cuenta cuando aparezca el resultado correcto.", "Si te atascas, la pista te orienta. «Me rindo» te muestra una solución."],
+    how: "Escribe el comando y pulsa Enviar. Los botones de abajo te dan Tab, la flecha arriba y los símbolos | / - ~ que cuesta encontrar en el teclado del iPhone." },
   spot: { title: "Caza de señales", intro: "Un mensaje de phishing casi nunca tiene una sola pista: tiene varias. Aquí las buscas tú, una por una.",
     points: ["El remitente: un dominio parecido pero distinto, o un correo personal.", "La urgencia: plazos cortos, miedo, «no se lo digas a nadie».", "El enlace: ¿lleva al dominio oficial?", "Lo que piden: claves, códigos SMS, datos de tarjeta, dinero."],
     example: "«bancoandino-verificacion.com» no es «bancoandino.com.co»: basta una palabra de más para que sea otro dueño.",

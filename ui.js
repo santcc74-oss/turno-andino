@@ -54,7 +54,8 @@
         <button class="btn primary wide" id="h-exam">Presentar el examen</button>
       </section>` : ""}
 
-      ${trainingCard(city)}
+      ${LINUX.homeCard()}
+      ${LINUX.blocking() ? "" : trainingCard(city)}
 
       <section class="pass" aria-label="Pase de abordar de tu próximo turno">
         <div class="pass-scene">${SCENE.scene(city.code, { label: "Paisaje de " + city.city })}<span class="scene-tag mono">${esc(city.city)} · ${{ day: "de día", dusk: "atardecer", night: "de noche" }[SCENE.phase()]}</span></div>
@@ -75,6 +76,7 @@
             <div><dt>Sello</dt><dd>${st === "done" ? "Listo" : st === "exam" ? "Examen" : Math.min(prog.good, TA.GOOD_FOR_STAMP) + "/" + TA.GOOD_FOR_STAMP}</dd></div>
           </dl>
           ${LEARN.canWork(city.code) ? `<button class="btn primary wide big" id="h-start">${pending ? "Empezar uno nuevo" : "Empezar turno"}</button>`
+            : LINUX.blocking() ? `<button class="btn primary wide big" id="h-camp-first">Empieza por el Campamento Linux</button><p class="small center">Antes de la ciberseguridad aprendes a usar la terminal: ${LINUX.count()} de ${LX_LEVELS.length} niveles. Al terminarlo se abre Bogotá.</p>`
             : `<button class="btn primary wide big" id="h-learn-first">Primero, tu capacitación</button><p class="small center">Estudia un tema de ${esc(city.city)} (unos ${LEARN.minutes(city.mods[0])} minutos) y se abre tu primer turno.</p>`}
         </div>
       </section>
@@ -334,6 +336,9 @@
     on("h-aula", () => LEARN.aula(TA.S.city, () => go(view)));
     on("h-lesson", () => LEARN.lesson(document.getElementById("h-lesson").dataset.mod, () => go(view)));
     on("h-learn-first", () => LEARN.lesson(LEARN.cityProgress(TA.S.city).next, () => go(view)));
+    on("h-camp-first", () => LINUX.open(() => go(view)));
+    on("h-camp-all", () => LINUX.open(() => go(view)));
+    on("h-camp", () => LINUX.level(document.getElementById("h-camp").dataset.l, () => go(view)));
     on("rt-aula", () => LEARN.aula(TA.S.city, () => go(view)));
     if (view === "vida") LIFE.wire(() => { const y = window.scrollY; go("vida"); window.scrollTo(0, y); });
     on("h-co", () => go("empresa"));
@@ -395,7 +400,7 @@
   function intro() {
     const steps = [
       ["marta", "Bienvenido al Banco Andino", "Soy Marta Quintero, jefa del SOC. Empiezas como practicante. Cada turno dura unos 3 minutos y trae 6 tickets: correos, llamadas, alertas y preguntas del equipo."],
-      ["juli", "Primero aprendes, luego trabajas", "Cada ciudad empieza con su capacitación: lecciones cortas con explicaciones sencillas. Después resuelves tickets solo de lo que ya estudiaste. Resuelve cada ticket. Los aciertos te dan reputación y te acercan al ascenso. Los errores le bajan la salud al banco, pero siempre verás la explicación. Lo que falles volverá después para que lo repases."],
+      ["juli", "Primero aprendes, luego trabajas", "Empiezas en el Campamento Linux: aprendes a usar la terminal de los servidores con un servidor de práctica. Después, cada ciudad tiene su capacitación: lecciones cortas con explicaciones sencillas. Después resuelves tickets solo de lo que ya estudiaste. Resuelve cada ticket. Los aciertos te dan reputación y te acercan al ascenso. Los errores le bajan la salud al banco, pero siempre verás la explicación. Lo que falles volverá después para que lo repases."],
       ["cama", "Cuidado con el Camaleón", "Un estafador se disfraza de soporte, de presidente o de aerolínea. Cada vez que lo atrapes se abre una página de su expediente. Puedes pausar el turno cuando quieras: queda guardado."],
     ];
     let k = 0;
@@ -412,7 +417,7 @@
       $("#in-next").onclick = () => { if (k < steps.length - 1) { k++; draw(); } else finish(true); };
       const sk = $("#in-skip"); if (sk) sk.onclick = () => finish(false);
     };
-    const finish = (startNow) => { TA.S.intro = true; TA.save(); el.hidden = true; go("hoy"); if (startNow) LEARN.lesson(LEARN.cityProgress(TA.S.city).next || TA.cityByCode(TA.S.city).mods[0], () => go("hoy")); };
+    const finish = (startNow) => { TA.S.intro = true; TA.save(); el.hidden = true; go("hoy"); if (startNow) { if (LINUX.blocking()) LINUX.open(() => go("hoy")); else LEARN.lesson(LEARN.cityProgress(TA.S.city).next || TA.cityByCode(TA.S.city).mods[0], () => go("hoy")); } };
     el.hidden = false;
     draw();
   }

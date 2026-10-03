@@ -930,12 +930,12 @@ textarea { width: 100%; font-size: .8rem; padding: 10px; border-radius: 10px; bo
 /* Firewall en vivo */
 .fw-rules { margin: 8px 0 0; padding-left: 18px; font-size: .86rem; line-height: 1.45; }
 .fw-lane { position: relative; height: 230px; border-radius: var(--r); background: var(--night); overflow: hidden; background-image: linear-gradient(transparent 49%, rgba(233, 238, 245, .08) 50%, transparent 51%); }
-.fw-server { position: absolute; right: 8px; top: 50%; transform: translateY(-50%); display: grid; justify-items: center; gap: 4px; color: var(--night-ink); font: 500 .66rem/1 var(--f-mono); }
+.fw-server { position: absolute; right: 8px; top: 50%; transform: translateY(-50%); display: grid; justify-items: center; gap: 4px; color: var(--night-ink); font: 500 .7rem/1 var(--f-mono); }
 .fw-server svg { width: 38px; height: 38px; fill: none; stroke: currentColor; stroke-width: 1.6; }
 .pkt { position: absolute; left: 0; min-width: 104px; min-height: 52px; white-space: nowrap; padding: 6px 10px; border-radius: 10px; border: 1px solid rgba(233, 238, 245, .25); background: #1C2A40; color: var(--night-ink); display: flex; flex-direction: column; gap: 2px; font: inherit; text-align: left; cursor: pointer; will-change: transform; }
 .pkt b { font-size: 1.1rem; white-space: nowrap; }
 .pkt b small { font-size: .7rem; opacity: 1; }
-.pkt small { font-size: .64rem; opacity: .85; }
+.pkt small { font-size: .7rem; opacity: .85; }
 .pkt.row-0 { top: 12px; }
 .pkt.row-1 { top: 89px; }
 .pkt.row-2 { top: 166px; }
@@ -988,3 +988,45 @@ textarea { width: 100%; font-size: .8rem; padding: 10px; border-radius: 10px; bo
 .zn-in i { font-style: normal; font-size: .75rem; padding: 4px 6px; border-radius: 6px; background: var(--card); }
 .zn-in i.ok { background: var(--teal-soft); color: var(--teal); }
 .zn-in i.bad { background: var(--danger-soft); color: var(--danger); text-decoration: line-through; }
+
+/* ——— Campamento Linux y terminal simulada ——— */
+.lx-term { background: #0D1622; border-radius: var(--r); overflow: hidden; border: 1px solid #1F2D42; }
+.lx-scr { max-height: 44vh; min-height: 150px; overflow-y: auto; padding: 8px 12px 4px; -webkit-overflow-scrolling: touch; }
+.lx-scr pre { margin: 0 0 4px; font: 400 .8rem/1.5 var(--f-mono); white-space: pre-wrap; overflow-wrap: anywhere; color: #D6DFEA; }
+.lx-scr .lx-cmd { color: #E6EBF2; margin-top: 6px; }
+.lx-scr .lx-err { color: #F2A08F; }
+.lx-scr .lx-note { color: #7FD6CE; font-family: var(--f-body); font-size: .8rem; border-left: 2px solid #45BDB3; padding-left: 8px; }
+.lx-term .u, .lx-ex .u { color: #8BD87A; font-weight: 500; }
+.lx-term .d, .lx-ex .d { color: #7FB4F8; font-weight: 500; }
+.lx-line { display: flex; align-items: center; gap: 6px; padding: 8px 12px 10px; border-top: 1px solid #1F2D42; background: #0A121D; }
+.lx-ps { flex: none; font-size: .8rem; color: #D6DFEA; white-space: nowrap; max-width: 55%; overflow: hidden; text-overflow: ellipsis; }
+.lx-line input { flex: 1; min-width: 0; background: transparent; border: 0; outline: 0; color: #FFFFFF; font-size: 16px; padding: 6px 0; caret-color: #8BD87A; }
+.lx-line input:disabled { opacity: .5; }
+.lx-send { flex: none; width: 40px; height: 36px; border-radius: 8px; border: 1px solid #2A3B55; background: #172335; color: #8BD87A; font: 600 1.05rem/1 var(--f-mono); cursor: pointer; }
+.lx-peng { background: #E9EEF5; border-radius: 50%; padding: 3px; }
+.lx-keys { display: flex; gap: 6px; overflow-x: auto; padding: 8px 0 2px; scrollbar-width: none; }
+.lx-keys::-webkit-scrollbar { display: none; }
+.lx-keys button { flex: none; min-width: 44px; min-height: 44px; padding: 0 12px; border-radius: 10px; border: 1px solid var(--line); background: var(--card); color: var(--ink); font: 500 1rem/1 var(--f-mono); cursor: pointer; }
+.lx-ex { display: block; margin: 10px 0; padding: 10px 12px; background: #0D1622; color: #D6DFEA; border-radius: 10px; font: 400 .74rem/1.55 var(--f-mono); white-space: pre; overflow-x: auto; }
+.lx-card ul, .lx-card ol { padding-left: 20px; margin: 8px 0; }
+.lx-card li { margin: 4px 0; }
+.lx-mission { padding: 14px; border-radius: var(--r); background: var(--card); border: 1.5px solid var(--brass); display: flex; flex-direction: column; gap: 8px; }
+.lx-mission.ok { border-color: var(--teal); background: var(--teal-soft); }
+.lx-mission p { margin: 0; }
+.lx-goal { font-weight: 600; font-size: 1.02rem; line-height: 1.4; }
+.lx-help { display: flex; gap: 8px; flex-wrap: wrap; }
+.lx-help .btn { min-height: 40px; padding: 6px 12px; font-size: .88rem; }
+.lx-extra code { word-break: break-all; }
+.lx-hero { display: grid; grid-template-columns: 56px 1fr; gap: 12px; align-items: center; }
+.lx-hero p { margin: 0; font-size: .95rem; line-height: 1.5; }
+.lx-peng { width: 56px; height: 56px; flex: none; }
+.ls-done .lx-peng { width: 96px; height: 96px; }
+.lx-home .train-next .lx-peng { width: 40px; height: 40px; }
+.ls-row:disabled { opacity: .55; cursor: default; }
+.lx-cheat h3 { margin: 0 0 8px; }
+.lx-cheat dl { margin: 0; display: flex; flex-direction: column; gap: 10px; }
+.lx-cheat dt { font-weight: 600; font-size: .9rem; }
+.lx-cheat dd { margin: 2px 0 0; font-size: .88rem; color: var(--muted); display: flex; flex-direction: column; gap: 4px; }
+.lx-cheat dd code { align-self: flex-start; color: var(--ink); }
+.camp-lock { padding: 14px; border-radius: var(--r); background: var(--brass-soft); display: flex; flex-direction: column; gap: 10px; }
+.camp-lock p { margin: 0; }

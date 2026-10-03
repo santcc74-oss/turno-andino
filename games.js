@@ -303,7 +303,9 @@
   const needsLabel = (type) => {
     const n = TYPE_NEEDS[type];
     const ids = Array.isArray(n) ? n : (n && n.any) || [];
-    const m = MODULES.find((x) => x.id === ids.find((i) => !LEARN.learned(i)) || ids[0]);
+    const id = ids.find((i) => !LEARN.learned(i)) || ids[0];
+    if (/^lx\d/.test(id || "")) { const l = LX_LEVELS.find((x) => x.id === id); return "Campamento Linux" + (l ? " · " + l.title : ""); }
+    const m = MODULES.find((x) => x.id === id);
     return m ? m.title : "";
   };
   function arcade(onClose) {
@@ -321,11 +323,14 @@
         <header class="ls-head"><button class="icon-btn" data-x aria-label="Cerrar la sala de juegos"><svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
           <div><p class="eyebrow">Sala de juegos</p><h2>Juega cuando quieras</h2></div></header>
         <p class="small">Partidas de uno o dos minutos, fuera de los turnos. Cada victoria da 5 de reputación. Los juegos se abren al estudiar su tema.</p>
+        ${window.LINUX && LINUX.done("lx1") ? `<div class="duo"><button class="btn" data-free>Terminal libre</button><button class="btn" data-cheat>Chuleta de comandos</button></div>` : ""}
         <ul class="ar-grid">${games.map(([k, name, blurb]) => { const open = LEARN.typeAllowed(k), st = S.arcade[k] || { w: 0, n: 0 };
           return `<li><button class="ar-card ${open ? "" : "locked"}" data-g="${k}" ${open ? "" : "disabled"}><b>${esc(name)}</b><small>${esc(blurb)}</small>
             <span class="mono small">${open ? (st.n ? `${st.w} de ${st.n} ganadas` : "Nuevo") : "Estudia: " + esc(needsLabel(k))}</span></button></li>`; }).join("")}</ul></div>`;
       el.querySelector("[data-x]").onclick = close;
       el.querySelectorAll("[data-g]").forEach((b) => b.onclick = () => play(b.dataset.g));
+      const fr = el.querySelector("[data-free]"); if (fr) fr.onclick = () => LINUX.free();
+      const ch = el.querySelector("[data-cheat]"); if (ch) ch.onclick = () => LINUX.cheat();
     };
     const play = (k) => {
       const t = GAMES[k] ? GAMES[k].make(TA.cityByCode(S.city), new Set()) : PLAY.makeGame(k);

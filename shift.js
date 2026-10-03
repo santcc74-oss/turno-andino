@@ -163,6 +163,7 @@
     if (/^cm\d+$/.test(id)) return CMDS[+id.slice(2)] ? cmdTicket(+id.slice(2)) : null;
     if (/^sc\d+$/.test(id)) return SCANS[+id.slice(2)] ? scanTicket(+id.slice(2)) : null;
     if (/^rk\d+$/.test(id)) return RISKS[+id.slice(2)] ? riskTicket(+id.slice(2)) : null;
+    if (/^lt\d+$/.test(id)) return GAMES.shell ? GAMES.shell.fromId(id) : null;
     if (/^sp\d+$/.test(id)) return SPOTS[+id.slice(2)] ? Object.assign({ type: "spot", id }, SPOTS[+id.slice(2)]) : null;
     if (/^cq-/.test(id)) { const t = quizTicket(id); if (t) { t.career = id.split("-")[1]; t.label = "Caso de especialidad"; } return t; }
     return quizTicket(id);
@@ -255,7 +256,7 @@
     else startTimer(t);
   }
 
-  const SLOW = { match: 1.6, order: 1.6, spot: 1.6, zones: 1.6, caesar: 1.4, password: 2, firewall: 2.2, triage: 3 };
+  const SLOW = { match: 1.6, order: 1.6, spot: 1.6, zones: 1.6, caesar: 1.4, password: 2, firewall: 2.2, triage: 3, shell: 3 };
   function slaFor(t) { return TA.slaSeconds() * 1000 * (SLOW[t.type] || 1); }
   function renderGame(root, t, done) {
     let over = false;

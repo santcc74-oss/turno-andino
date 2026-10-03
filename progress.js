@@ -23,7 +23,7 @@
     m22: 5, m23: 5, m26: 5, m27: 5,
   };
   const DOM_OF_EXTRA = [1, 2, 1, 1, 3, 4, 4, 2, 5, 4, 4, 5, 2, 3, 3];
-  const DOM_OF_TYPE = { mail: 2, call: 2, header: 2, code: 2, log: 4, siem: 4, cve: 4, order: 4, decode: 1, ports: 3, scan: 4, risk: 5, cmd: 4, spot: 2, firewall: 3, caesar: 1, password: 4, triage: 4, zones: 3 };
+  const DOM_OF_TYPE = { mail: 2, call: 2, header: 2, code: 2, log: 4, siem: 4, cve: 4, order: 4, decode: 1, ports: 3, scan: 4, risk: 5, cmd: 4, spot: 2, firewall: 3, caesar: 1, password: 4, triage: 4, zones: 3, shell: 4 };
   function domOf(t) {
     const id = t.id || "";
     let m;
@@ -243,6 +243,8 @@
     A("j-fw", "craft", "plata", "Portero de la red", "Gana 5 partidas de Firewall en vivo.", () => [val("ok_firewall"), 5]),
     A("j-triage", "craft", "plata", "Cabeza fría", "Gana 5 partidas de Triaje contra reloj.", () => [val("ok_triage"), 5]),
     A("j-all", "craft", "oro", "Jugador completo", "Gana al menos una vez cada uno de los 6 juegos.", () => [GAME_TYPES.filter((g) => val("ok_" + g) > 0).length, 6]),
+    A("l-camp", "craft", "plata", "Pingüino graduado", "Completa los 9 niveles del Campamento Linux.", () => [window.LINUX ? LINUX.count() : 0, 9]),
+    A("l-term", "craft", "plata", "Manos en la terminal", "Resuelve 10 retos de Terminal en vivo.", () => [val("ok_shell"), 10]),
     A("k-multi", "career", "plata", "Polivalente", "Llega al segundo cargo en 3 especialidades distintas.", () => [careerCount(1), 3]),
     A("g-10", "craft", "bronce", "Curioso", "Consulta 10 palabras del diccionario.", () => [Object.keys(st().words || {}).length, 10]),
     A("g-50", "craft", "plata", "Diccionario andante", "Consulta 50 palabras del diccionario.", () => [Object.keys(st().words || {}).length, 50]),

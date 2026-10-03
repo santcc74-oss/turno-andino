@@ -3,13 +3,13 @@
 
 window.CITIES = [
   { code: "BOG", city: "Bogotá", country: "Colombia", office: "Sede principal · Calle 72", phase: "f0", gate: "A3",
-    mods: ["m01", "m02", "m03"], games: { quiz: 3, spot: 2, mail: 2, call: 2, decode: 2, header: 1, cmd: 1, english: 1 },
+    mods: ["m01", "m02", "m03"], games: { quiz: 3, shell: 1, spot: 2, mail: 2, call: 2, decode: 2, header: 1, cmd: 1, english: 1 },
     intro: "Bienvenido al SOC del Banco Andino. Hoy aprendes cómo piensa una máquina: bits, hashes y el sistema operativo." },
   { code: "MDE", city: "Medellín", country: "Colombia", office: "Centro de datos El Poblado", phase: "f1", gate: "B7",
-    mods: ["m04a", "m04", "m05", "m06"], games: { quiz: 3, log: 3, cmd: 2, siem: 1, code: 1, mail: 1, call: 1, english: 1 },
+    mods: ["m04a", "m04", "m05", "m06"], games: { quiz: 3, shell: 2, log: 3, cmd: 2, siem: 1, code: 1, mail: 1, call: 1, english: 1 },
     intro: "Los servidores del banco corren Linux. Aquí lees logs, revisas permisos y encuentras lo que no encaja." },
   { code: "UIO", city: "Quito", country: "Ecuador", office: "Nodo de red Andino Norte", phase: "f2", gate: "C2",
-    mods: ["m07", "m08", "m09"], games: { quiz: 3, firewall: 2, zones: 1, ports: 2, log: 1, siem: 1, cmd: 1, order: 1, mail: 1, english: 1 },
+    mods: ["m07", "m08", "m09"], games: { quiz: 3, shell: 1, firewall: 2, zones: 1, ports: 2, log: 1, siem: 1, cmd: 1, order: 1, mail: 1, english: 1 },
     intro: "Todo ataque viaja por una red. En Quito aprendes a leer IPs, puertos y protocolos." },
   { code: "LIM", city: "Lima", country: "Perú", office: "Fábrica de software", phase: "f3", gate: "A9",
     mods: ["m10", "m11", "m12"], games: { quiz: 3, code: 3, decode: 1, log: 1, call: 1, english: 1 },
@@ -21,13 +21,13 @@ window.CITIES = [
     mods: ["m16", "m17", "m18"], games: { quiz: 3, spot: 1, code: 2, cve: 2, header: 1, mail: 1, call: 1, order: 1 },
     intro: "El Camaleón se mueve rápido. Aquí estudias cómo atacan para saber defender." },
   { code: "GRU", city: "São Paulo", country: "Brasil", office: "SOC regional 24/7", phase: "f6", gate: "F6",
-    mods: ["m19", "m20", "m21"], games: { quiz: 3, triage: 2, siem: 3, log: 2, cmd: 1, cve: 1, order: 1, mail: 1 },
+    mods: ["m19", "m20", "m21"], games: { quiz: 3, shell: 1, triage: 2, siem: 3, log: 2, cmd: 1, cve: 1, order: 1, mail: 1 },
     intro: "El SOC regional nunca duerme. Alertas del SIEM, MITRE ATT&CK y respuesta a incidentes." },
   { code: "PTY", city: "Panamá", country: "Panamá", office: "Centro de pagos y tarjetas", phase: "f7", gate: "B2",
     mods: ["m22", "m23", "m24"], games: { quiz: 3, zones: 1, spot: 1, call: 2, mail: 1, header: 1, code: 1, log: 1, order: 1 },
     intro: "Aquí pasan millones en pagos cada hora. Fraude, PCI DSS y regulación financiera." },
   { code: "MAD", city: "Madrid", country: "España", office: "Dirección global de seguridad", phase: "f8", gate: "T4",
-    mods: ["m25", "m26", "m27"], games: { quiz: 3, cve: 2, siem: 1, code: 1, order: 1, mail: 1, english: 1 },
+    mods: ["m25", "m26", "m27"], games: { quiz: 3, shell: 1, cve: 2, siem: 1, code: 1, order: 1, mail: 1, english: 1 },
     intro: "Nube, gobierno y el examen final. Quien pasa por Madrid está listo para Security+." },
 ];
 
