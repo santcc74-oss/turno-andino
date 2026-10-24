@@ -255,6 +255,29 @@
       <div class="seg-body">${body}</div>`;
   }
 
+  /* ——— Sincronización con código ——— */
+  const SYNC_TXT = { off: "", busy: "Sincronizando…", ok: "Sincronizado.", error: "No se pudo sincronizar. Se reintenta al volver a abrir el juego." };
+  function syncBlock() {
+    if (TASYNC.code) return `
+      <section class="block">
+        <h2>Sincronización entre dispositivos</h2>
+        <p class="small">Activa en este dispositivo. Tu progreso se guarda cifrado y se actualiza solo en los demás dispositivos donde uses el mismo código. Gana siempre la copia más reciente.</p>
+        <p class="small" id="sy-msg" role="status">${SYNC_TXT[TASYNC.status] || ""}</p>
+        <button class="btn wide" id="sy-now">Sincronizar ahora</button>
+        <button class="btn ghost wide" id="sy-off">Desconectar este dispositivo</button>
+      </section>`;
+    return `
+      <section class="block">
+        <h2>Sincronización entre dispositivos</h2>
+        <p class="small">Usa el mismo código en tu iPhone y en tu Mac para compartir el progreso. El progreso se cifra en tu dispositivo: el servidor no puede leerlo. Guarda el código, porque sin él no se puede recuperar.</p>
+        <label class="small" for="sy-code">Código (mínimo 10 caracteres)</label>
+        <input id="sy-code" class="mono" type="text" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="Escribe tu código o genera uno">
+        <button class="btn wide" id="sy-go">Activar sincronización</button>
+        <button class="btn ghost wide" id="sy-gen">Generar un código nuevo</button>
+        <p class="small" id="sy-msg" role="status"></p>
+      </section>`;
+  }
+
   /* ——— Perfil ——— */
   function perfil() {
     const S = TA.S, acc = S.answered ? Math.round((S.correct / S.answered) * 100) : 0;
@@ -286,6 +309,7 @@
           <li>Ábrelo una vez con internet. Después funciona sin conexión, en el avión o el bus.</li>
         </ol>
       </section>
+      ${syncBlock()}
       <section class="block">
         <h2>Respaldo de tu progreso</h2>
         <p class="small">Tu progreso vive en este teléfono. Copia el respaldo y guárdalo en tus notas; para recuperarlo, pégalo abajo.</p>
@@ -381,6 +405,23 @@
         navigator.clipboard.writeText(txt).then(() => { msg.textContent = "Respaldo copiado. Pégalo en tus notas."; }, fallback);
       } catch (e) { fallback(); }
     });
+    on("sy-gen", () => { $("#sy-code").value = TASYNC.generate(); $("#sy-msg").textContent = "Código generado. Anótalo ahora: lo necesitas para conectar tus otros dispositivos."; });
+    on("sy-go", async (e) => {
+      const msg = $("#sy-msg"), btn = e.target; btn.disabled = true; msg.textContent = "Conectando…";
+      try {
+        const r = await TASYNC.connect($("#sy-code").value);
+        if (r === "applied") { location.reload(); return; }
+        go("perfil");
+        $("#sy-msg").textContent = r === "empty" || r === "kept" ? "Sincronización activa. Tu progreso de este dispositivo ya está en la nube." : "Sincronización activa.";
+      } catch (err) { msg.textContent = err.message; btn.disabled = false; }
+    });
+    on("sy-now", async () => {
+      const msg = $("#sy-msg"); msg.textContent = "Sincronizando…";
+      const r = await TASYNC.syncNow();
+      if (r === "applied") { location.reload(); return; }
+      msg.textContent = r === "error" ? SYNC_TXT.error : "Sincronizado.";
+    });
+    on("sy-off", () => { TASYNC.disconnect(); go("perfil"); });
     on("pf-import", () => {
       const msg = $("#pf-msg");
       try {
@@ -427,6 +468,7 @@
     document.querySelectorAll(".tabs button").forEach((b) => b.onclick = () => go(b.dataset.v));
     let tab = "hoy";
     try { tab = localStorage.getItem("turno-andino-tab") || "hoy"; } catch (e) {}
+    TASYNC.start();
     PROG.ensureMissions();
     go(tab);
     PROG.check();

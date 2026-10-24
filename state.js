@@ -45,6 +45,7 @@
   function save() {
     S.updated = Date.now();
     try { localStorage.setItem(LS_KEY, JSON.stringify(S)); } catch (e) {}
+    if (window.TASYNC) window.TASYNC.changed();
   }
   function reset() { S = fresh(); save(); }
   function load(obj) { S = merge(obj); save(); }

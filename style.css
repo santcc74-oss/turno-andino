@@ -176,6 +176,7 @@ svg { fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round
 .head p:not(.eyebrow) { color: var(--muted); font-size: .95rem; max-width: 60ch; }
 .block { display: flex; flex-direction: column; gap: 10px; padding-top: 16px; border-top: 1px solid var(--line); }
 .steps { margin: 0; padding-left: 1.2rem; display: flex; flex-direction: column; gap: 6px; }
+#sy-code { width: 100%; font-size: 16px; padding: 12px 14px; min-height: 48px; border-radius: 10px; border: 1px solid var(--line); background: var(--card); color: var(--ink); margin: 6px 0 10px; }
 textarea { width: 100%; font-size: .8rem; padding: 10px; border-radius: 10px; border: 1px solid var(--line); background: var(--card); color: var(--ink); resize: vertical; }
 .st { flex: none; font: 500 .7rem/1 var(--f-mono); text-transform: uppercase; letter-spacing: .06em; padding: 5px 7px; border-radius: 6px; white-space: nowrap; }
 .st.done { background: var(--teal-soft); color: var(--teal); }
