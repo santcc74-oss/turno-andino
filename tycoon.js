@@ -5,9 +5,11 @@
   const UNLOCK_RANK = 2, FOUND_COST = 300, LEAD_DAYS = 4, CAND_EVERY = 4, BRANCH_COST = 1000, MAX_EVENTS = 2;
   const SAL = [0, 16, 26, 40];
   const CONTRACT_DAYS = 30;
+  const BECA_COST = 1500, BECA_DAYS = 12, BECA_MAX = 3;
   const RISK_P = [0, 0.04, 0.07, 0.11];
   const $ = (s) => document.querySelector(s);
-  const C = () => TA.S.co;
+  /* Empresas fundadas antes de los productos, el marketing y las metas reciben esos campos vacíos. */
+  const C = () => { const co = TA.S.co; if (co && !co.goals) Object.assign(co, { products: {}, mkt: 0, goals: {} }, { stats: Object.assign({ upsell: 0, trained: 0 }, co.stats) }); return co; };
   const svc = (id) => SVC.find((x) => x.id === id);
   const tpl = (id) => CLIENT_TPL.find((x) => x.id === id);
   const careerOf = (id) => CAREERS.find((c) => c.id === id);
@@ -30,7 +32,7 @@
     S.money -= FOUND_COST;
     S.co = { day: 0, cash: FOUND_COST, rep: 10, office: 0, staff: [], tools: {}, clients: [], leads: [], cands: [], events: [],
       news: [], hist: [{ d: 0, cash: FOUND_COST, inc: 0, cost: 0 }], branches: {}, uid: 1, lastCands: -99,
-      stats: { won: 0, lost: 0, ok: 0, bad: 0, ethic: 0 } };
+      stats: { won: 0, lost: 0, ok: 0, bad: 0, ethic: 0, upsell: 0, trained: 0 }, products: {}, mkt: 0, goals: {} };
     news("Registraste Andino Shield con ₳ " + FOUND_COST + " de capital. ¡Suerte, fundador!", "good");
     newLead(true); newLead(true);
     refreshCands();
@@ -71,7 +73,11 @@
     const co = C();
     return clamp(20 + (co.tools.mfa ? 35 : 0) + (co.tools.backup ? 25 : 0) + (co.office >= 2 ? 10 : 0), 0, 100);
   }
-  const dailyFee = () => C().clients.reduce((s, c) => s + c.fee, 0);
+  const hasRole = (role) => founderRole() === role || C().staff.some((p) => p.role === role);
+  const prod = (id) => PRODUCTS.find((x) => x.id === id);
+  const liveProducts = () => Object.keys(C().products || {}).filter((id) => C().products[id] <= C().day);
+  const productInc = () => liveProducts().reduce((s, id) => s + prod(id).inc * (hasRole(prod(id).role) ? 1 : 0.5), 0);
+  const dailyFee = () => C().clients.reduce((s, c) => s + c.fee, 0) + productInc();
   const mrr = () => dailyFee() * 20;
   function stage() {
     let i = 0;
@@ -91,14 +97,15 @@
     const co = C();
     const taken = new Set(co.clients.map((c) => c.tpl).concat(co.leads.map((l) => l.tpl)));
     const pool = CLIENT_TPL.filter((t) => !taken.has(t.id) && (onlyEasy ? t.minRep === 0 : t.minRep <= co.rep));
-    if (!pool.length || co.leads.length >= 3) return;
+    if (!pool.length || co.leads.length >= 4) return;
     co.leads.push({ tpl: pick(pool).id, until: co.day + LEAD_DAYS });
   }
   function refreshCands() {
     const co = C();
     const roles = CAREERS.map((c) => c.id);
     co.cands = [0, 1, 2].map(() => {
-      const r = Math.random(), lvl = r < 0.6 - co.rep / 400 ? 1 : r < 0.92 ? 2 : 3;
+      const net = Math.min(TA.S.network || 0, 8) * 0.04;
+      const r = Math.random(), lvl = r < 0.6 - co.rep / 400 - net ? 1 : r < 0.92 - net ? 2 : 3;
       return { name: pick(CO_NAMES.first) + " " + pick(CO_NAMES.last), role: pick(roles), lvl, salary: SAL[lvl] };
     });
     co.lastCands = co.day;
@@ -148,6 +155,12 @@
       return false;
     });
 
+    /* Productos propios. */
+    Object.keys(co.products).forEach((id) => { if (co.products[id] === co.day) say("¡Lanzaste " + prod(id).name + "! Ya está vendiendo.", "good"); });
+    out.prod = Math.round(productInc());
+    out.inc += out.prod;
+    liveProducts().filter((id) => !hasRole(prod(id).role)).forEach((id) => { if (co.day % 5 === 0) say(prod(id).name + " vende la mitad: nadie de " + roleName(prod(id).role) + " lo mantiene.", "bad"); });
+
     /* Costos. */
     const k = costs();
     out.cost = k.total;
@@ -175,8 +188,18 @@
       say("Se venció la licitación de " + tpl(l.tpl).name + ".", "");
       return false;
     });
-    if (Math.random() < Math.min(0.6, 0.2 + co.rep / 250 + Object.keys(co.branches).length * 0.08)) newLead(false);
+    if (Math.random() < Math.min(0.8, 0.2 + co.rep / 250 + Object.keys(co.branches).length * 0.08 + (co.mkt >= co.day ? 0.3 : 0))) newLead(false);
     if (co.day - co.lastCands >= CAND_EVERY) refreshCands();
+    /* Becarios de la fundación que se gradúan: llegan como candidatos con experiencia y salario de nivel 1. */
+    co.becas = (co.becas || []).filter((b) => {
+      if (b.until > co.day) return true;
+      const roles = CAREERS.map((c) => c.id);
+      co.cands.unshift({ name: b.name, role: pick(roles), lvl: 2, salary: SAL[1], becario: true });
+      co.cands = co.cands.slice(0, 4);
+      co.becados = (co.becados || 0) + 1;
+      say(b.name + " terminó su beca de la Fundación Andino Shield y quiere trabajar contigo (nivel 2 con salario de nivel 1).", "good");
+      return false;
+    });
 
     /* Incidentes nuevos. */
     const addEv = (def, cl) => { if (co.events.length < MAX_EVENTS) { co.events.push({ id: def.id, client: cl ? cl.uid : null }); out.events += 1; } };
@@ -192,6 +215,7 @@
     if (co.staff.length && Math.random() < ((100 - selfSec()) / 100) * 0.04) addEv(CO_EVENTS.find((e) => e.kind === "own"));
     if (out.events) say(out.events === 1 ? "Hay un incidente esperando tu decisión." : "Hay " + out.events + " incidentes esperando tu decisión.", "bad");
 
+    checkGoals();
     co.hist.push({ d: co.day, cash: Math.round(co.cash), inc: out.inc, cost: out.cost });
     co.hist = co.hist.slice(-30);
     TA.save();
@@ -212,6 +236,95 @@
     }
   }
 
+  /* ——— Metas de la empresa ——— */
+  const GOAL_TEST = {
+    "g-client": (co) => co.stats.won >= 1, "g-hire": (co) => co.staff.length >= 1, "g-siem": (co) => !!co.tools.siem,
+    "g-3clients": (co) => co.clients.length >= 3, "g-upsell": (co) => co.stats.upsell >= 1, "g-incidents": (co) => co.stats.ok >= 5,
+    "g-startup": () => stage().i >= 1, "g-train": (co) => co.stats.trained >= 1, "g-product": () => liveProducts().length >= 1,
+    "g-pyme": () => stage().i >= 2, "g-office": (co) => co.office >= 2, "g-branch": (co) => Object.keys(co.branches).length >= 1,
+    "g-10staff": (co) => co.staff.length >= 10, "g-regional": () => stage().i >= 3,
+  };
+  function checkGoals() {
+    const co = C();
+    if (!co) return;
+    CO_GOALS.forEach((g) => {
+      if (co.goals[g.id] || !GOAL_TEST[g.id](co)) return;
+      co.goals[g.id] = co.day; co.cash += g.cash;
+      news("Meta cumplida: " + g.t + ". +" + money(g.cash) + " para la caja.", "good");
+      if (window.PROG) PROG.toast({ kind: "mission", title: "Meta de Andino Shield", text: g.t, sub: "+" + money(g.cash) + " en caja" });
+    });
+  }
+  /* Después de cada acción: guardar, revisar metas y logros. */
+  const done = () => { checkGoals(); TA.save(); if (window.PROG) PROG.check(); return null; };
+
+  function train(uid) {
+    const co = C(), p = co.staff.find((x) => x.uid === uid);
+    if (!p || p.lvl >= 3) return null;
+    const cost = 150 * p.lvl;
+    if (co.cash < cost) return "Te faltan " + money(cost - co.cash) + " en caja para el curso.";
+    co.cash -= cost; p.lvl += 1; p.salary = SAL[p.lvl]; p.morale = clamp(p.morale + 10, 0, 100); co.stats.trained += 1;
+    news(p.name + " terminó un curso y subió a nivel " + p.lvl + ". Rinde más y ahora gana " + money(p.salary) + " por día.", "good");
+    return done();
+  }
+  const bonusCost = () => 40 * C().staff.length;
+  function bonus() {
+    const co = C();
+    if (!co.staff.length) return "Todavía no tienes equipo.";
+    if (co.cash < bonusCost()) return "Te faltan " + money(bonusCost() - co.cash) + " en caja.";
+    co.cash -= bonusCost();
+    co.staff.forEach((p) => { p.morale = clamp(p.morale + 25, 0, 100); });
+    news("Pagaste un bono al equipo. El ánimo subió.", "good");
+    return done();
+  }
+  function upsell(uid, id) {
+    const co = C(), cl = co.clients.find((c) => c.uid === uid), t = cl && tpl(cl.tpl);
+    if (!cl || cl.services.includes(id) || !t.needs.some((n) => n[0] === id)) return null;
+    if (cl.sat < 60) return t.name + " no quiere ampliar el contrato mientras su satisfacción esté por debajo del 60 %.";
+    const add = Math.round(svc(id).fee * t.budget);
+    cl.services.push(id); cl.fee += add; co.stats.upsell += 1;
+    news(t.name + " agregó " + svc(id).name + " a su contrato: +" + money(add) + " por día.", "good");
+    return done();
+  }
+  function market(id) {
+    const co = C(), m = MARKETING.find((x) => x.id === id);
+    if (co.rep < m.minRep) return "Necesitas " + m.minRep + " de reputación.";
+    if (id === "linkedin" && co.mkt >= co.day) return "La campaña ya está corriendo hasta el día " + co.mkt + ".";
+    if (co.cash < m.cost) return "Te faltan " + money(m.cost - co.cash) + " en caja.";
+    co.cash -= m.cost;
+    if (id === "charla") { co.rep = clamp(co.rep + 1, 0, 100); const n = co.leads.length; newLead(false); news(co.leads.length > n ? "Tu charla atrajo una licitación nueva." : "Diste la charla; por ahora no hay clientes nuevos disponibles.", "good"); }
+    if (id === "linkedin") { co.mkt = co.day + 10; news("Lanzaste una campaña en LinkedIn hasta el día " + co.mkt + ".", "good"); }
+    if (id === "informe") {
+      co.rep = clamp(co.rep + 5, 0, 100);
+      const taken = new Set(co.clients.map((c) => c.tpl).concat(co.leads.map((l) => l.tpl)));
+      const big = CLIENT_TPL.filter((t) => !taken.has(t.id) && t.minRep <= co.rep).sort((a, b) => b.budget - a.budget)[0];
+      if (big && co.leads.length < 4) co.leads.push({ tpl: big.id, until: co.day + LEAD_DAYS + 2 });
+      news("Tu informe de amenazas circuló en el sector." + (big ? " " + big.name + " quiere una propuesta." : ""), "good");
+    }
+    return done();
+  }
+  function build(id) {
+    const co = C(), p = prod(id);
+    if (co.products[id] != null) return null;
+    if (co.rep < p.minRep) return "Necesitas " + p.minRep + " de reputación para que el mercado confíe en tu producto.";
+    if (co.cash < p.cost) return "Te faltan " + money(p.cost - co.cash) + " en caja.";
+    co.cash -= p.cost; co.products[id] = co.day + p.days;
+    news("Empezaste a desarrollar " + p.name + ". Sale en " + p.days + " días hábiles.", "");
+    return done();
+  }
+
+  function beca() {
+    const co = C();
+    co.becas = co.becas || [];
+    if (co.becas.length >= BECA_MAX) return "Ya tienes " + BECA_MAX + " becarios estudiando. Espera a que se gradúe uno.";
+    if (co.cash < BECA_COST) return "Te faltan " + money(BECA_COST - co.cash) + " en caja.";
+    co.cash -= BECA_COST;
+    const name = pick(CO_NAMES.first) + " " + pick(CO_NAMES.last);
+    co.becas.push({ name, until: co.day + BECA_DAYS });
+    co.rep = clamp(co.rep + 3, 0, 100);
+    news("Becaste a " + name + " para estudiar ciberseguridad. Se gradúa el día " + (co.day + BECA_DAYS) + ".", "good");
+    return done();
+  }
+
   /* ——— Acciones del jugador ——— */
   function decide(idx, optIdx) {
     const co = C(), ev = co.events[idx];
@@ -221,8 +334,7 @@
     co.events.splice(idx, 1);
     if (o.ok) { co.stats.ok += 1; if (def.kind === "ethics") co.stats.ethic += 1; } else co.stats.bad += 1;
     news((o.ok ? "Bien manejado: " : "Mal manejado: ") + def.title + ".", o.ok ? "good" : "bad");
-    TA.save();
-    if (window.PROG) PROG.check();
+    done();
     return { def, o };
   }
 
@@ -240,13 +352,12 @@
       client = { uid: co.uid++, tpl: t.id, services: matched, fee, sat: wrong.length ? 62 : 72, since: co.day, until: co.day + CONTRACT_DAYS, q: 1 };
       co.clients.push(client);
       co.stats.won += 1;
-      news("¡Ganaste la licitación de " + t.name + "! Cobras " + money(fee) + " por día.", "good");
+      news("¡Ganaste la licitación de " + t.name + "! Cobras " + money(fee) + " por día." + (missing.length ? " Lo que faltó en tu propuesta lo puedes ofrecer después en Clientes." : ""), "good");
     } else {
       co.stats.lost += 1;
       news("Perdiste la licitación de " + t.name + ".", "bad");
     }
-    TA.save();
-    if (window.PROG) PROG.check();
+    done();
     return { t, matched, wrong, missing, win, client };
   }
 
@@ -257,9 +368,7 @@
     co.staff.push({ uid: co.uid++, name: c.name, role: c.role, lvl: c.lvl, salary: c.salary, morale: 80, days: 0 });
     co.cands.splice(i, 1);
     news("Contrataste a " + c.name + " (" + roleName(c.role) + ", nivel " + c.lvl + ").", "good");
-    TA.save();
-    if (window.PROG) PROG.check();
-    return null;
+    return done();
   }
   function fire(uid) {
     const co = C(), p = co.staff.find((x) => x.uid === uid);
@@ -275,8 +384,7 @@
     if (co.cash < t.setup) return "Te faltan " + money(t.setup - co.cash) + " en caja.";
     co.cash -= t.setup; co.tools[id] = co.day;
     news("Compraste " + t.name + ".", "good");
-    TA.save();
-    return null;
+    return done();
   }
   function upgradeOffice() {
     const co = C(), next = OFFICES[co.office + 1];
@@ -285,9 +393,7 @@
     co.cash -= next.cost; co.office += 1;
     if (next.rep) co.rep = clamp(co.rep + next.rep, 0, 100);
     news("Te mudaste a: " + next.name + ".", "good");
-    TA.save();
-    if (window.PROG) PROG.check();
-    return null;
+    return done();
   }
   function openBranch(code) {
     const co = C();
@@ -295,9 +401,7 @@
     if (co.cash < BRANCH_COST) return "Te faltan " + money(BRANCH_COST - co.cash) + " en caja.";
     co.cash -= BRANCH_COST; co.branches[code] = co.day; co.rep = clamp(co.rep + 6, 0, 100);
     news("Abriste sucursal en " + TA.cityByCode(code).city + ".", "good");
-    TA.save();
-    if (window.PROG) PROG.check();
-    return null;
+    return done();
   }
   function invest(amount) {
     const S = TA.S, a = Math.min(amount, S.money);
@@ -401,9 +505,15 @@
 
   const TAB_VIEW = {
     resumen() {
+      const goalsBlock = () => {
+        const co = C(), pend = CO_GOALS.filter((g) => !co.goals[g.id]), n = CO_GOALS.length - pend.length;
+        return `<section class="block"><h2>Metas de la empresa · ${n} de ${CO_GOALS.length}</h2>
+          ${pend.length ? `<ul class="co-goals">${pend.slice(0, 3).map((g) => `<li><span class="ls-state" aria-hidden="true">◎</span><span>${esc(g.t)}</span><span class="mono">+${money(g.cash)}</span></li>`).join("")}</ul><p class="small">Cada meta cumplida paga a la caja de la empresa.</p>` : `<p class="small">Cumpliste todas las metas. Andino Shield es un referente.</p>`}</section>`;
+      };
       const co = C(), last = co.hist[co.hist.length - 1];
       return `<section class="block"><h2>Caja de la empresa</h2>${spark()}
         ${co.day ? `<p class="small">Ayer: ingresos ${money(last.inc)} · gastos ${money(last.cost)} · neto <b>${money(last.inc - last.cost)}</b></p>` : `<p class="small">Tu primer día hábil llega cuando termines tu próximo turno en el banco.</p>`}</section>
+        ${goalsBlock()}
         <section class="block"><h2>Noticias</h2><ul class="co-news">${co.news.slice(0, 10).map((n) => `<li class="${n.tone}"><span class="mono">D${n.d}</span>${esc(n.text)}</li>`).join("")}</ul></section>`;
     },
     clientes() {
@@ -412,6 +522,7 @@
       return `<ul class="co-list">${co.clients.map((cl) => { const t = tpl(cl.tpl), q = cl.q == null ? 1 : cl.q;
         return `<li class="co-card"><div class="cc-top"><div class="cc-name"><b>${esc(t.name)}</b><small>${esc(t.sector)} · contrato hasta el día ${cl.until}</small></div><span class="mono">${money(cl.fee)}/día</span></div>
           <div class="chips">${cl.services.map((id) => `<span class="chip">${esc(svc(id).name)}</span>`).join("")}</div>
+          ${t.needs.filter((n) => !cl.services.includes(n[0])).map((n) => `<button class="btn wide co-up" data-up="${cl.uid}" data-svc="${n[0]}">Ofrecer ${esc(svc(n[0]).name)} · +${money(Math.round(svc(n[0]).fee * t.budget))}/día</button><p class="small">${esc(n[1])}</p>`).join("")}
           <div><span class="small">Satisfacción ${Math.round(cl.sat)} %${q < 0.7 ? " · servicio insuficiente: pagas multas" : q < 1 ? " · servicio justo" : ""}</span><div class="bar sm ${cl.sat < 40 ? "weak" : ""}"><i style="width:${cl.sat}%"></i></div></div></li>`; }).join("")}</ul>`;
     },
     equipo() {
@@ -427,8 +538,10 @@
           <li class="co-person"><span class="car-dot" style="--h:${(careerOf(founderRole()) || { hue: 38 }).hue}"></span><div><b>Tú (fundador)</b><small>${esc(roleName(founderRole()))} · ${esc(founderLvl)} · aportas 2 puntos</small></div></li>
           ${co.staff.map((p) => `<li class="co-person"><span class="car-dot" style="--h:${careerOf(p.role).hue}"></span><div><b>${esc(p.name)}</b><small>${esc(roleName(p.role))} · nivel ${p.lvl} · ${money(p.salary)}/día</small>
             <div class="bar sm ${p.morale < 40 ? "weak" : ""}"><i style="width:${p.morale}%"></i></div><small>Ánimo ${Math.round(p.morale)} %</small></div>
-            <button class="btn ghost co-fire" data-fire="${p.uid}">Despedir</button></li>`).join("")}
-        </ul></section>`;
+            <div class="co-acts">${p.lvl < 3 ? `<button class="btn" data-train="${p.uid}">Curso · ${money(150 * p.lvl)}</button>` : ""}<button class="btn ghost co-fire" data-fire="${p.uid}">Despedir</button></div></li>`).join("")}
+        </ul>
+        ${co.staff.length ? `<button class="btn wide" id="co-bonus">Bono al equipo · ${money(bonusCost())} · +25 de ánimo para todos</button>
+        <p class="small">Un curso sube a la persona un nivel ya mismo (rinde más, pero gana más). Sin cursos, suben solas cada 20 días.</p>` : ""}</section>`;
     },
     mercado() {
       const co = C();
@@ -436,8 +549,12 @@
         return `<li class="co-card"><div class="cc-top"><div class="cc-name"><b>${esc(t.name)}</b><small>${esc(t.sector)} · vence en ${Math.max(0, l.until - co.day)} ${l.until - co.day === 1 ? "día" : "días"}</small></div></div>
           <p class="small">${esc(t.brief)}</p><button class="btn primary wide" data-bid="${i}">Preparar propuesta</button></li>`; }).join("");
       const cands = co.cands.map((c, i) => `<li class="co-person"><span class="car-dot" style="--h:${careerOf(c.role).hue}"></span><div><b>${esc(c.name)}</b><small>${esc(careerOf(c.role).name)} · nivel ${c.lvl} · ${money(c.salary)}/día</small></div>
-        <button class="btn" data-hire="${i}">Contratar</button></li>`).join("");
+        ${c.becario ? `<span class="st done">Becario</span>` : ""}<button class="btn" data-hire="${i}">Contratar</button></li>`).join("");
+      const mk = MARKETING.map((m) => `<li class="item"><span class="car-dot" style="--h:38"></span><div class="item-t"><b>${esc(m.name)}</b><small>${esc(m.what)}${m.minRep ? " Requiere " + m.minRep + " de reputación." : ""}</small>
+          ${m.id === "linkedin" && co.mkt >= co.day ? `<small class="mono">Activa hasta el día ${co.mkt}</small>` : ""}</div>
+          <button class="btn buy" data-mkt="${m.id}" ${co.rep < m.minRep || (m.id === "linkedin" && co.mkt >= co.day) ? "disabled" : ""}>${money(m.cost)}</button></li>`).join("");
       return `<section class="block"><h2>Licitaciones abiertas</h2>${leads ? `<ul class="co-list">${leads}</ul>` : `<p class="small">No hay licitaciones ahora. Llegan más cada día, y más seguido si tu reputación sube.</p>`}</section>
+        <section class="block"><h2>Marketing</h2><p class="small">Se paga con la caja de la empresa.</p><ul class="shop">${mk}</ul></section>
         <section class="block"><h2>Candidatos</h2><p class="small">Se renuevan cada ${CAND_EVERY} días. Para contratar necesitas una semana de salario en caja.</p>${cands ? `<ul class="co-list">${cands}</ul>` : `<p class="small">Sin candidatos por ahora.</p>`}</section>`;
     },
     inversion() {
@@ -448,7 +565,17 @@
       const stamped = CITIES.filter((c) => TA.S.stamps[c.code]);
       const branches = stamped.map((c) => `<li class="item"><span class="iata sm">${c.code}</span><div class="item-t"><b>${esc(c.city)}</b><small>+6 de reputación y más licitaciones. ${money(5)} por día.</small></div>
         ${co.branches[c.code] ? `<span class="st done">Abierta</span>` : `<button class="btn buy" data-branch="${c.code}">${money(BRANCH_COST)}</button>`}</li>`).join("");
-      return `<section class="block"><h2>Herramientas</h2><ul class="shop">${tools}</ul></section>
+      const prods = PRODUCTS.map((p) => { const at = co.products[p.id], live = at != null && at <= co.day, dev = at != null && !live;
+        return `<li class="item ${live ? "own" : ""}"><span class="car-dot" style="--h:${live ? 175 : dev ? 38 : 210}"></span>
+          <div class="item-t"><b>${esc(p.name)}</b><small>${esc(p.what)}</small><small class="mono">+${money(p.inc)}/día · lo mantiene: ${esc(roleName(p.role))}${p.minRep ? " · reputación " + p.minRep : ""}</small>
+          ${live && !hasRole(p.role) ? `<small class="co-warn">Vende la mitad: contrata a alguien de ${esc(roleName(p.role))}.</small>` : ""}</div>
+          ${live ? `<span class="st done">Vendiendo</span>` : dev ? `<span class="st exam">Sale el día ${at}</span>` : `<button class="btn buy" data-prod="${p.id}" ${co.rep < p.minRep ? "disabled" : ""}>${money(p.cost)}</button>`}</li>`; }).join("");
+      return `<section class="block"><h2>Productos propios (I+D)</h2><p class="small">Pagas el desarrollo, tardan unos días hábiles y después venden solos, aunque no tengas clientes de servicios.</p><ul class="shop">${prods}</ul></section>
+        <section class="block"><h2>Herramientas</h2><ul class="shop">${tools}</ul></section>
+        <section class="block"><h2>Fundación Andino Shield</h2><p class="small">Pagas la formación de jóvenes que quieren entrar a la ciberseguridad. +3 de reputación por beca, y al graduarse (${BECA_DAYS} días) llegan como candidatos de nivel 2 con salario de nivel 1.</p>
+          ${(co.becas || []).length ? `<ul class="co-goals">${co.becas.map((b) => `<li><span class="ls-state" aria-hidden="true">◎</span><span>${esc(b.name)}</span><span class="mono">día ${b.until}</span></li>`).join("")}</ul>` : ""}
+          <button class="btn wide" id="co-beca" ${(co.becas || []).length >= BECA_MAX ? "disabled" : ""}>Dar una beca · ${money(BECA_COST)}</button>
+          <p class="small">Becarios graduados: ${co.becados || 0}.</p></section>
         <section class="block"><h2>Oficina</h2><p class="small">Ahora: <b>${esc(OFFICES[co.office].name)}</b> (${OFFICES[co.office].staff} puestos, ${money(OFFICES[co.office].rent)}/día).</p>
           ${next ? `<button class="btn wide" id="co-office">Mudarte a ${esc(next.name)} · ${money(next.cost)}</button><p class="small">${next.staff} puestos · arriendo ${money(next.rent)}/día${next.rep ? " · +" + next.rep + " de reputación" : ""}</p>` : `<p class="small">Tienes la mejor sede posible.</p>`}</section>
         <section class="block"><h2>Sucursales</h2><p class="small">Puedes abrir sucursal en cada ciudad donde tengas el sello del pasaporte. Requiere oficina propia.</p>${branches ? `<ul class="shop">${branches}</ul>` : `<p class="small">Aún no tienes sellos del pasaporte.</p>`}</section>
@@ -552,6 +679,12 @@
     on("#co-office", () => act(upgradeOffice));
     on("[data-invest]", (b) => act(() => invest(+b.dataset.invest)));
     on("[data-withdraw]", (b) => act(() => withdraw(+b.dataset.withdraw)));
+    on("[data-train]", (b) => act(() => train(+b.dataset.train)));
+    on("#co-bonus", () => act(bonus));
+    on("#co-beca", () => act(beca));
+    on("[data-up]", (b) => act(() => upsell(+b.dataset.up, b.dataset.svc)));
+    on("[data-mkt]", (b) => act(() => market(b.dataset.mkt)));
+    on("[data-prod]", (b) => act(() => build(b.dataset.prod)));
     on("[data-fire]", (b) => {
       if (!b.dataset.sure) { b.dataset.sure = "1"; b.textContent = "¿Seguro?"; return; }
       fire(+b.dataset.fire); refresh();
@@ -567,10 +700,10 @@
   }
   function resultCard(r) {
     return `<div class="banner co-res"><p class="eyebrow">Andino Shield · día ${r.day}</p>
-      <p>Ingresos ${money(r.inc)} · gastos ${money(r.cost)}${r.fines ? " · multas " + money(r.fines) : ""} · caja <b>${money(r.cash)}</b></p>
+      <p>Ingresos ${money(r.inc)}${r.prod ? " (productos " + money(r.prod) + ")" : ""} · gastos ${money(r.cost)}${r.fines ? " · multas " + money(r.fines) : ""} · caja <b>${money(r.cash)}</b></p>
       ${r.events ? `<p class="co-warn">${r.events === 1 ? "Un incidente espera tu decisión." : r.events + " incidentes esperan tu decisión."}</p>` : ""}
       <button class="btn wide" id="r-co">Ir a mi empresa</button></div>`;
   }
 
-  window.TYC = { unlocked, founded, found, nextDay, view, wire, homeCard, resultCard, stage, mrr, supply, demand, evalBid, decide, hire, buyTool, upgradeOffice, invest, withdraw, selfSec, costs, UNLOCK_RANK, FOUND_COST };
+  window.TYC = { unlocked, founded, found, nextDay, beca, train, bonus, upsell, market, build, checkGoals, liveProducts, productInc, view, wire, homeCard, resultCard, stage, mrr, supply, demand, evalBid, decide, hire, buyTool, upgradeOffice, invest, withdraw, selfSec, costs, UNLOCK_RANK, FOUND_COST };
 })();

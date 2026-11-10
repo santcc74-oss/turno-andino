@@ -75,7 +75,7 @@
             <div><dt>Duración</dt><dd>≈3 min</dd></div>
             <div><dt>Sello</dt><dd>${st === "done" ? "Listo" : st === "exam" ? "Examen" : Math.min(prog.good, TA.GOOD_FOR_STAMP) + "/" + TA.GOOD_FOR_STAMP}</dd></div>
           </dl>
-          ${LEARN.canWork(city.code) ? `<button class="btn primary wide big" id="h-start">${pending ? "Empezar uno nuevo" : "Empezar turno"}</button>`
+          ${LEARN.canWork(city.code) ? `<button class="btn primary wide big" id="h-start">${pending ? "Empezar uno nuevo" : "Empezar turno"}</button>${LIFE.packLine()}`
             : LINUX.blocking() ? `<button class="btn primary wide big" id="h-camp-first">Empieza por el Campamento Linux</button><p class="small center">Antes de la ciberseguridad aprendes a usar la terminal: ${LINUX.count()} de ${LX_LEVELS.length} niveles. Al terminarlo se abre Bogotá.</p>`
             : `<button class="btn primary wide big" id="h-learn-first">Primero, tu capacitación</button><p class="small center">Estudia un tema de ${esc(city.city)} (unos ${LEARN.minutes(city.mods[0])} minutos) y se abre tu primer turno.</p>`}
         </div>

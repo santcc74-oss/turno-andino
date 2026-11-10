@@ -15,6 +15,7 @@
     seenN: {}, career: null, careers: {}, careerOffered: false, co: null, attack: {}, cases: {},
     learned: {}, primers: {}, gear: {}, home: 0, certs: {}, souvenirs: {},
     linux: { done: {} }, linuxReq: true,
+    supplies: {}, cdt: [], confs: {}, network: 0, mentorN: 0, cdtPaid: 0,
   });
 
   function merge(raw) {

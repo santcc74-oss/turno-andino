@@ -45,3 +45,37 @@ window.SOUVENIRS = {
   LIM: ["Llama de peluche", 70], SCL: ["Piedra de lapislázuli", 90], MEX: ["Alebrije pintado a mano", 90],
   GRU: ["Camiseta de fútbol", 100], PTY: ["Sombrero pintao", 110], MAD: ["Abanico de Madrid", 120],
 };
+
+/* ——— Provisiones: consumibles que se gastan solos al empezar tu próximo turno (uno de cada tipo). max = cuántos puedes guardar. ——— */
+window.SUPPLIES = [
+  { id: "tinto", glyph: "cup", name: "Tinto para llevar", price: 30, max: 5, eff: "+1 pista en tu próximo turno." },
+  { id: "plan", glyph: "key", name: "Plan de contingencia impreso", price: 70, max: 3, eff: "Tu primer error del próximo turno no baja la salud del banco." },
+  { id: "taxi", glyph: "bag", name: "Taxi al aeropuerto", price: 25, max: 5, eff: "+10 segundos para ganar el bono de rapidez en el próximo turno." },
+  { id: "desayuno", glyph: "plant", name: "Desayuno con el equipo", price: 60, max: 3, eff: "+25 % de reputación en el próximo turno." },
+];
+
+/* ——— Mentoría: pagas una sesión y repasas tus temas débiles con la explicación de cada respuesta. ——— */
+window.MENTOR = { price: 60, n: 6, xpPer: 6, who: "juli" };
+
+/* ——— Conferencias reales de ciberseguridad. Una vez cada una. net = contactos (mejoran los candidatos de tu empresa). ——— */
+window.CONFS = [
+  { id: "bsides", name: "BSides Bogotá", where: "Bogotá, Colombia", price: 150, xp: 60, net: 1,
+    fact: "Las BSides son conferencias hechas por la comunidad, baratas o gratis, que existen en cientos de ciudades. Son el mejor lugar para dar tu primera charla." },
+  { id: "dragonjar", name: "DragonJAR Security Conference", where: "Colombia", price: 300, xp: 100, net: 1,
+    fact: "DragonJAR es una de las comunidades de seguridad más grandes en español. Su conferencia reúne investigadores de toda Latinoamérica." },
+  { id: "ekoparty", name: "Ekoparty", where: "Buenos Aires, Argentina", price: 700, xp: 180, net: 2,
+    fact: "Ekoparty nació en 2007 y es la conferencia técnica de seguridad más conocida de Latinoamérica: charlas, talleres y competencias CTF." },
+  { id: "defcon", name: "DEF CON", where: "Las Vegas, EE. UU.", price: 1800, xp: 420, net: 2,
+    fact: "DEF CON existe desde 1993. Es famosa por sus «villages»: espacios para aprender de cerraduras, radio o ingeniería social, siempre con fines educativos." },
+  { id: "rsac", name: "RSA Conference", where: "San Francisco, EE. UU.", price: 2200, xp: 400, net: 3,
+    fact: "RSAC es la gran feria de la industria: los fabricantes muestran productos y los CISO hablan de estrategia. Sirve para entender el negocio de la seguridad." },
+  { id: "blackhat", name: "Black Hat USA", where: "Las Vegas, EE. UU.", price: 2600, xp: 450, net: 3,
+    fact: "Black Hat empezó en 1997. Allí se presentan investigaciones nuevas, y muchas veces los fabricantes corrigen las fallas justo antes de que se expongan." },
+];
+
+/* ——— CDT del Banco Andino: dejas el dinero quieto unos turnos y te devuelven más. (Simplificado para el juego.) ——— */
+window.CDT_PLANS = [
+  { days: 8, rate: 0.04, min: 100 },
+  { days: 20, rate: 0.12, min: 300 },
+  { days: 40, rate: 0.28, min: 1000 },
+];

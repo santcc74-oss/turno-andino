@@ -207,8 +207,10 @@
   function start(code) {
     const S = TA.S, city = TA.cityByCode(code || S.city);
     S.cur = { city: city.code, tickets: buildShift(city), i: 0, health: 100, res: [], hints: TA.hintsPerShift(), shield: TA.shields(), xp: 0, elapsed: 0, fb: null };
+    const used = LIFE.useSupplies(S.cur);
     TA.save();
     open();
+    if (used.length) PROG.toast({ kind: "mission", title: "Provisiones para el turno", text: used.join(" · "), sub: "" });
   }
   function open() {
     const el = play();
@@ -257,7 +259,7 @@
   }
 
   const SLOW = { match: 1.6, order: 1.6, spot: 1.6, zones: 1.6, caesar: 1.4, password: 2, firewall: 2.2, triage: 3, shell: 3 };
-  function slaFor(t) { return TA.slaSeconds() * 1000 * (SLOW[t.type] || 1); }
+  function slaFor(t) { return (TA.slaSeconds() + ((TA.S.cur && TA.S.cur.slaPlus) || 0)) * 1000 * (SLOW[t.type] || 1); }
   function renderGame(root, t, done) {
     let over = false;
     const once = (ok, extra) => { if (over || !root.isConnected) return; over = true; done(ok, extra); };
@@ -396,10 +398,11 @@
     const acc = n ? good / n : 0;
     const stars = cur.health <= 0 ? 0 : acc >= 0.9 ? 3 : acc >= 0.7 ? 2 : acc >= 0.4 ? 1 : 0;
     let xp = cur.xp + (cur.health > 0 ? 20 : 0);
-    xp = Math.round(xp * TA.xpMult());
+    xp = Math.round(xp * TA.xpMult() * (cur.boost || 1));
     if (cur.health > 0) xp += TA.labXp();
     const pay = Math.round(before.salary * TA.salaryMult() * (0.4 + 0.6 * acc));
     S.xp += xp; S.money += pay; S.shifts += 1;
+    LIFE.cdtTick();
     const prog = TA.cityProg(city.code);
     prog.shifts += 1;
     if (stars >= 2) prog.good += 1;

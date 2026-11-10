@@ -145,6 +145,27 @@ window.CO_EVENTS = [
       { t: "Esperar a tener todo resuelto antes de reportar", eff: { sat: -10, rep: -4 } },
       { t: "No reportar para evitar mala prensa", eff: { sat: -20, rep: -10 } }],
     why: "Los plazos de reporte son obligatorios. Se informa lo conocido y se actualiza; ocultarlo trae sanciones." },
+  { id: "ddos", kind: "client", need: "mdr", title: "Sitio caído por tráfico masivo",
+    text: "El sitio de {c} no responde: le llegan millones de peticiones por segundo desde miles de equipos.",
+    opts: [
+      { t: "Activar la protección anti-DDoS del proveedor o de la CDN, filtrar el tráfico y avisar a los usuarios del sitio", ok: true, eff: { sat: 12, rep: 3 } },
+      { t: "Reiniciar el servidor una y otra vez", eff: { sat: -15, rep: -2 } },
+      { t: "Bloquear a mano cada IP que aparezca en el log", eff: { sat: -10, rep: -2 } }],
+    why: "Un DDoS viene de miles de equipos a la vez: se mitiga con un servicio que absorbe y filtra el tráfico antes de que llegue al servidor." },
+  { id: "patch", kind: "client", minRisk: 2, title: "Falla crítica publicada hoy",
+    text: "Se publicó una vulnerabilidad crítica en una librería que usa {c} en sus servidores, y ya hay ataques reportados en internet.",
+    opts: [
+      { t: "Inventariar dónde está la librería, parchar primero lo expuesto a internet y vigilar intentos de explotación", ok: true, eff: { sat: 12, rep: 3 } },
+      { t: "Esperar al mantenimiento programado del próximo mes", eff: { sat: -20, rep: -4 } },
+      { t: "Apagar todos los servidores hasta tener el parche", eff: { sat: -15, rep: -2 } }],
+    why: "Con explotación activa se prioriza por exposición: primero lo que da a internet. Por eso un inventario al día vale oro (pasó con Log4Shell en 2021)." },
+  { id: "stuffing", kind: "client", need: "fraud", title: "Miles de inicios de sesión",
+    text: "La app de {c} recibe miles de intentos de inicio de sesión por minuto con usuarios y claves filtrados de otros sitios.",
+    opts: [
+      { t: "Limitar intentos por IP y dispositivo, pedir verificación adicional y obligar a cambiar la clave a las cuentas que entraron", ok: true, eff: { sat: 12, rep: 3 } },
+      { t: "Desactivar el inicio de sesión de todos los clientes", eff: { sat: -20, rep: -3 } },
+      { t: "No hacer nada: las claves vienen de otros sitios", eff: { sat: -20, rep: -5 } }],
+    why: "Es relleno de credenciales (credential stuffing): prueban claves reutilizadas en otros sitios. Se frena con límites, MFA y cambio de clave a los afectados." },
   { id: "hackcomp", kind: "ethics", title: "Un encargo turbio",
     text: "Un empresario te ofrece ₳ 800 por «entrar» al correo de su competencia y sacarle información.",
     opts: [
@@ -173,4 +194,42 @@ window.CO_EVENTS = [
       { t: "Cambiar solo esa clave y no decirle nada a nadie", eff: { rep: -20, churn: 1 } },
       { t: "Apagar el SIEM una semana hasta que se calme", eff: { rep: -15, churn: 1 } }],
     why: "Los atacantes van por los proveedores para llegar a sus clientes (como con Kaseya o SolarWinds). Se contiene y se avisa con transparencia." },
+];
+
+/* ——— Productos propios (I+D): pagas el desarrollo, tardan unos días y luego venden solos.
+   role = carrera que debe haber en tu equipo para mantenerlo (si no hay nadie, vende la mitad). ——— */
+window.PRODUCTS = [
+  { id: "phishsim", name: "Simulador de phishing para pymes", cost: 900, days: 5, inc: 18, minRep: 15, role: "grc",
+    what: "Una plataforma en la nube donde las pymes envían simulacros de phishing a sus empleados y ven quién hizo clic." },
+  { id: "webscan", name: "Escáner web como servicio", cost: 2200, days: 8, inc: 40, minRep: 30, role: "appsec",
+    what: "Revisa cada semana los sitios de tus clientes buscando configuraciones inseguras y librerías desactualizadas." },
+  { id: "intel", name: "Feed de inteligencia de amenazas", cost: 4000, days: 10, inc: 72, minRep: 45, role: "soc",
+    what: "Una lista diaria de IP, dominios y hashes maliciosos que los SIEM de otras empresas cargan para alertar." },
+  { id: "antifraud", name: "Motor antifraude para cooperativas", cost: 7000, days: 14, inc: 125, minRep: 60, role: "fraude",
+    what: "Reglas y modelos que califican cada transacción en tiempo real y frenan las sospechosas antes de que salga el dinero." },
+];
+
+/* ——— Marketing: acciones para que lleguen licitaciones. ——— */
+window.MARKETING = [
+  { id: "charla", name: "Charla gratuita en una cámara de comercio", cost: 120, minRep: 0, what: "Llega una licitación nueva hoy y +1 de reputación." },
+  { id: "linkedin", name: "Campaña en LinkedIn por 10 días", cost: 350, minRep: 10, what: "Durante 10 días llegan licitaciones mucho más seguido." },
+  { id: "informe", name: "Publicar un informe de amenazas de la región", cost: 650, minRep: 30, what: "+5 de reputación y llega la licitación de un cliente grande." },
+];
+
+/* ——— Metas de la empresa: se cumplen solas y pagan a la caja. ——— */
+window.CO_GOALS = [
+  { id: "g-client", t: "Gana tu primer cliente", cash: 150 },
+  { id: "g-hire", t: "Contrata a tu primera persona", cash: 150 },
+  { id: "g-siem", t: "Compra el SIEM", cash: 200 },
+  { id: "g-3clients", t: "Ten 3 clientes a la vez", cash: 300 },
+  { id: "g-upsell", t: "Amplía el contrato de un cliente", cash: 200 },
+  { id: "g-incidents", t: "Maneja bien 5 incidentes", cash: 300 },
+  { id: "g-startup", t: "Llega a la etapa Startup", cash: 300 },
+  { id: "g-train", t: "Capacita a una persona de tu equipo", cash: 150 },
+  { id: "g-product", t: "Lanza tu primer producto", cash: 400 },
+  { id: "g-pyme", t: "Llega a la etapa Pyme", cash: 800 },
+  { id: "g-office", t: "Múdate a una oficina propia", cash: 500 },
+  { id: "g-branch", t: "Abre una sucursal", cash: 1000 },
+  { id: "g-10staff", t: "Ten 10 personas en el equipo", cash: 1200 },
+  { id: "g-regional", t: "Llega a Proveedor regional", cash: 2000 },
 ];

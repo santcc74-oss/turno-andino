@@ -1031,3 +1031,15 @@ textarea { width: 100%; font-size: .8rem; padding: 10px; border-radius: 10px; bo
 .lx-cheat dd code { align-self: flex-start; color: var(--ink); }
 .camp-lock { padding: 14px; border-radius: var(--r); background: var(--brass-soft); display: flex; flex-direction: column; gap: 10px; }
 .camp-lock p { margin: 0; }
+
+/* ——— Vida: seis pestañas; Andino Shield: metas y acciones ——— */
+.seg.seg6 { grid-template-columns: repeat(3, 1fr); }
+.seg.seg6 button { font-size: .8rem; padding: 10px 2px; }
+.co-goals { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
+.co-goals li { display: grid; grid-template-columns: 28px 1fr auto; gap: 10px; align-items: center; font-size: .92rem; }
+.co-goals .ls-state { width: 28px; height: 28px; background: var(--brass-soft); color: var(--brass); font-size: .85rem; }
+.co-goals .mono { color: var(--teal); font-size: .85rem; }
+.co-acts { display: flex; gap: 6px; flex-wrap: wrap; justify-content: flex-end; }
+.co-acts .btn { min-height: 40px; padding: 6px 10px; font-size: .85rem; }
+.co-up { margin-top: 4px; }
+.pack { margin-top: 6px; }
