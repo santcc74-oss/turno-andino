@@ -174,7 +174,7 @@
       <path d="${poly(AMERICAS, P)}" class="map-land"/>
       <g class="map-inset"><rect x="${INSET.x}" y="${INSET.y}" width="${INSET.w}" height="${INSET.h}" rx="8"/>
         <path d="${poly(IBERIA, PI)}" class="map-land"/>
-        <text x="${INSET.x + INSET.w / 2}" y="${INSET.y + INSET.h - 6}" text-anchor="middle" class="map-note">ESPAÑA · 8.000 KM</text></g>
+        <text x="352" y="${INSET.y + INSET.h + 14}" text-anchor="end" class="map-note">ESPAÑA · 8.000 KM</text></g>
       <g class="map-routes">${routes}</g>
       <g class="map-plane" id="map-plane" opacity="0"><path d="M-9 1.5 l7 -1 3.5 -7 h1.8 l-1.8 7 5.2 -.4 1.8 -2.2 h1.3 l-.9 3.5 .9 3.5 h-1.3 l-1.8 -2.2 -5.2 -.4 1.8 7 h-1.8 l-3.5 -7 -7 -1 z"/></g>
       <g class="map-nodes">${nodes}</g>
